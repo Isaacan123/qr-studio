@@ -1095,7 +1095,8 @@ function vistaInicio(m) {
   DB.qrs.slice().sort((a, b) => b.creado - a.creado).forEach(q => {
     const t = TIPOS[q.tipo], dst = usaPagina(q) ? urlPagina(q, DB.base_url) : "Datos dentro del QR (no necesita internet)";
     let mini = ""; try { mini = svgQR(contenidoQR(q, DB.base_url), q.d).svg; } catch (e) { mini = "<p class='muted'>Falta contenido</p>"; }
-    const c = el("div", "tarj", `<div class="mini">${mini}</div><div class="fila" style="gap:8px"><span style="width:22px;height:22px;display:inline-flex">${svgIco(t.i, t.c)}</span><b>${esc(q.nombre || t.n)}</b></div><div class="muted">${esc(t.n)}${q.seg.activa && usaPagina(q) ? " · 🔒 con contraseña" : ""}</div><div class="dst">${esc(dst)}</div><div class="fila"></div><div class="confirma"></div>`);
+    const c = el("div", "tarj", `<div class="mini">${mini}</div><div class="fila" style="gap:8px"><span style="width:22px;height:22px;display:inline-flex">${svgIco(t.i, t.c)}</span><b>${esc(q.nombre || t.n)}</b></div><div class="muted">${esc(t.n)}${q.seg.activa && usaPagina(q) ? " · 🔒 con contraseña" : ""}</div><div class="dst">${esc(dst)}</div><div class="pub"></div><div class="fila"></div><div class="confirma"></div>`);
+    if (usaPagina(q)) estadoPublicacion(q, c.querySelector(".pub"));
     const f = c.querySelectorAll(".fila")[1];
     const b = (txt, fn, cls = "btn") => { const x = el("button", cls, txt); x.onclick = fn; f.append(x); };
     b("Editar", () => { V.id = q.id; ir("editor", { paso: 2 }); }, "btn neg");
@@ -1109,6 +1110,18 @@ function vistaInicio(m) {
     g.append(c);
   });
   m.append(g);
+}
+/* dice si la pagina de un QR ya esta publicada (solo se puede revisar en el mismo sitio) */
+async function estadoPublicacion(q, caja) {
+  const u = urlPagina(q, DB.base_url);
+  if (!/^https?:/.test(location.protocol) || !u.startsWith(location.origin + "/")) return;
+  caja.innerHTML = `<span class="muted">Revisando si está publicada…</span>`;
+  try {
+    const r = await fetch(u, { method: "GET", cache: "no-store" });
+    const html = r.ok ? await r.text() : "";
+    if (r.ok && html.includes('id="cfg"')) caja.innerHTML = `<span class="estado ok" style="margin:0">✓ Publicada: el QR ya funciona</span>`;
+    else caja.innerHTML = `<div class="av" style="margin:0">⚠ <b>Falta publicar su página.</b> Si escaneas este QR verás “todavía no tiene página”. Usa <b>Exportar todo (ZIP)</b> y sube la carpeta <b>q</b> a GitHub.</div>`;
+  } catch (e) { caja.innerHTML = ""; }
 }
 function slugLibre(s, yo) { s = slugify(s) || "qr"; let k = s, i = 2; while (DB.qrs.some(x => x.slug === k && x.id !== yo)) k = `${s}-${i++}`; return k; }
 
