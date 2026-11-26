@@ -158,6 +158,10 @@ input,select,textarea{font-size:16px}
 .marca,.nav button{white-space:nowrap}
 @media(max-width:600px){.p3 .vista .qr svg{max-width:200px}.p3 .vista{padding:14px}}
 @media(max-width:430px){.marca span{display:none}.nav{margin-left:auto}.nav button{font-size:14px;padding:8px 10px}}
+.estilos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.estilos{grid-template-columns:repeat(2,1fr)}}
+.estilo{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.estilo.on{border:2px solid #111;background:#fafafa}.estilo svg{width:100%;height:auto;max-width:150px}.estilo span{font-size:13px;color:#333}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:11px 18px;border-radius:10px;display:none;z-index:50;max-width:90vw}
 .oculto{display:none!important}
 </style>
@@ -381,7 +385,7 @@ const DISENO_BASE = {
   cMod: "#000000", cMod2: "#2563eb", degradado: false, cMarco: "#000000", cPunto: "#000000", cFondo: "#ffffff", transparente: false,
   margen: 4, logo: "", logoTam: 0.22, logoFondo: true,
   marco: "ninguno", marcoColor: "#000000", marcoTexto: "ESCANÉAME", marcoTextoColor: "#ffffff",
-  marca: { logo: "", tam: 1, dx: 0, dy: 0, rot: 0, flipH: false, flipV: false, aclarar: 0.2, punto: 0.55, forma: "circulo" }
+  marca: { logo: "", tam: 1, dx: 0, dy: 0, rot: 0, flipH: false, flipV: false, aclarar: 0.1, punto: 0.5, forma: "circulo" }
 };
 
 /* Devuelve {svg, vw, vh, version} — texto: contenido del QR, d: diseño */
@@ -1160,6 +1164,8 @@ function rango(l, v, min, max, paso, cb, fmt = x => Math.round(x * 100) + "%") {
 function paso3(m, q) {
   const cols = el("div", "cols p3"), izq = el("div"), der = el("div", "der"); cols.append(izq, der); m.append(cols);
   izq.append(el("h2", "", "Personaliza tu código QR"));
+  if (disenoSinTocar(q.d) && logoDe(q) && !q.__auto) { q.__auto = 1; coloresDeLogo(logoDe(q)).then(col => { if (!disenoSinTocar(q.d)) return; aplicarEstilo(q, estilosRapidos(logoDe(q), col)[0][1]); guardar(); pintar(); }); }
+  const gal = el("div"); izq.append(gal); galeriaEstilos(gal, q);
   const tabs = el("div", "tabs");
   [["personalizado", "Diseños personalizados", ""], ["marca", "Diseños de marca", "NUEVO"]].forEach(([k, l, e]) => {
     const b = el("button", V.tab === k ? "on" : "", esc(l) + (e ? `<em>${e}</em>` : "")); b.type = "button";
@@ -1211,9 +1217,13 @@ function paso3(m, q) {
   } else if (V.sub === "logo") {
     sec("Logo en el centro del QR");
     if (d.logo) panel.append(archivoFila(d.logo, "Logo", () => { d.logo = ""; cam(true); }));
-    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { d.logo = await procesarImagen(fs[0], 600); cam(true); }));
+    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { d.logo = await procesarImagen(fs[0], 900); if (!d.marca.logo) d.marca.logo = d.logo; const col = await coloresDeLogo(d.logo); if (d.cMod === "#000000" && d.cMarco === "#000000") Object.assign(d, { cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca, modulos: "redondeado", marcoEsq: "redondeado", puntoEsq: "redondeado" }); cam(true); }));
     if (!d.logo && q.pagina.portada) { const u = el("button", "btn", "Usar la portada de la página"); u.type = "button"; u.style.marginTop = "10px"; u.onclick = () => { d.logo = q.pagina.portada; cam(true); }; panel.append(u); }
     if (d.logo) {
+      const cv = el("div", "av info", `<b>¿Quieres el logo de fondo, ocupando todo el QR?</b><br>Así se ven los diseños de marca: tu logo detrás y los puntos encima.`);
+      const bm = el("button", "btn neg", "Usar mi logo de fondo"); bm.type = "button"; bm.style.marginTop = "10px";
+      bm.onclick = async () => { const col = await coloresDeLogo(d.logo); aplicarEstilo(q, estilosRapidos(d.logo, col)[0][1]); cam(true); };
+      cv.append(el("br"), bm); panel.append(cv);
       panel.append(rango("Tamaño del logo", d.logoTam, .12, .3, .01, v => { d.logoTam = v; cam(); }));
       const f = el("label", "toggle", `<input type="checkbox"${d.logoFondo ? " checked" : ""}> Fondo detrás del logo`); f.querySelector("input").onchange = e => { d.logoFondo = e.target.checked; cam(); }; panel.append(f);
       panel.append(el("div", "av info", "Con logo el QR usa corrección de errores alta (H), así se sigue leyendo aunque el logo tape parte del código."));
@@ -1222,7 +1232,7 @@ function paso3(m, q) {
     panel.append(el("p", "muted", "Sube un logotipo o una imagen y lo convertiremos en un código QR funcional y escaneable."));
     const M = d.marca;
     if (M.logo) panel.append(archivoFila(M.logo, "Imagen de fondo", () => { M.logo = ""; cam(true); }));
-    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { M.logo = await procesarImagen(fs[0], 1000, false); cam(true); }));
+    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { M.logo = await procesarImagen(fs[0], 1000, false); const col = await coloresDeLogo(M.logo); if (d.cMarco === "#000000") Object.assign(d, { cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca, marcoEsq: "redondeado", puntoEsq: "redondeado" }); cam(true); }));
     if (!M.logo && (q.pagina.portada || d.logo)) { const u = el("button", "btn", "Usar el logo que ya subí"); u.type = "button"; u.style.marginTop = "10px"; u.onclick = () => { M.logo = q.pagina.portada || d.logo; cam(true); }; panel.append(u); }
     if (M.logo) {
       sec("Ajustar recorte");
@@ -1285,6 +1295,72 @@ function paso3(m, q) {
   actualizarVista();
 }
 const nombreArchivo = q => (usaPagina(q) ? q.slug : slugify(q.nombre || TIPOS[q.tipo].n)) || "qr";
+
+/* ---------- colores de la marca sacados del logo ---------- */
+const COLORES_LOGO = new Map();
+async function coloresDeLogo(src) {
+  if (!src) return { marca: "#111111", oscuro: "#111111" };
+  if (COLORES_LOGO.has(src)) return COLORES_LOGO.get(src);
+  const r = await new Promise(ok => { const i = new Image(); i.onload = () => {
+    const c = document.createElement("canvas"), k = Math.min(1, 96 / Math.max(i.width, i.height)); c.width = Math.max(1, Math.round(i.width * k)); c.height = Math.max(1, Math.round(i.height * k));
+    const x = c.getContext("2d"); x.drawImage(i, 0, 0, c.width, c.height); const d = x.getImageData(0, 0, c.width, c.height).data, cubos = {};
+    for (let p = 0; p < d.length; p += 4) {
+      if (d[p + 3] < 128) continue; const R = d[p] / 255, G = d[p + 1] / 255, B = d[p + 2] / 255, mx = Math.max(R, G, B), mn = Math.min(R, G, B), l = (mx + mn) / 2, sat = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+      if (sat < .35 || l < .12 || l > .9) continue;
+      let h = 0; if (mx === R) h = ((G - B) / (mx - mn)) % 6; else if (mx === G) h = (B - R) / (mx - mn) + 2; else h = (R - G) / (mx - mn) + 4;
+      const k2 = Math.round(((h * 60 + 360) % 360) / 20); (cubos[k2] = cubos[k2] || [0, 0, 0, 0]); cubos[k2][0] += d[p]; cubos[k2][1] += d[p + 1]; cubos[k2][2] += d[p + 2]; cubos[k2][3]++;
+    }
+    const mejor = Object.values(cubos).sort((a, b) => b[3] - a[3])[0];
+    if (!mejor || mejor[3] < 6) return ok({ marca: "#111111", oscuro: "#111111" });
+    const hex = a => "#" + a.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+    let base = [mejor[0] / mejor[3], mejor[1] / mejor[3], mejor[2] / mejor[3]];
+    let m = base.slice(); while (lum(hex(m)) > .12) m = m.map(v => v * .88);       // esquinas: color de marca, legible
+    let o = base.slice(); while (lum(hex(o)) > .035) o = o.map(v => v * .85);      // puntos: version muy oscura
+    ok({ marca: hex(m), oscuro: hex(o) });
+  }; i.onerror = () => ok({ marca: "#111111", oscuro: "#111111" }); i.src = src; });
+  COLORES_LOGO.set(src, r); return r;
+}
+const logoDe = q => q.d.marca.logo || q.d.logo || q.pagina.portada || "";
+function estilosRapidos(logo, col) {
+  const M = (o, mo = {}) => ({ modo: "marca", margen: 4, marco: "ninguno", logo: "", marca: Object.assign({ logo, tam: 1, dx: 0, dy: 0, rot: 0, flipH: false, flipV: false, aclarar: .1, punto: .5, forma: "circulo" }, mo), ...o });
+  const P = o => ({ modo: "personalizado", margen: 4, marco: "ninguno", degradado: false, transparente: false, cFondo: "#ffffff", logo, logoTam: .24, logoFondo: true, ...o });
+  return [
+    ["Marca · puntos", M({ marcoEsq: "redondeado", puntoEsq: "redondeado", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca })],
+    ["Marca · puntos finos", M({ marcoEsq: "redondeado", puntoEsq: "circulo", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca }, { punto: .48, aclarar: .1 })],
+    ["Marca · círculos", M({ marcoEsq: "circulo", puntoEsq: "circulo", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca }, { punto: .55 })],
+    ["Marca · cuadros", M({ marcoEsq: "cuadrado", puntoEsq: "cuadrado", cMod: col.oscuro, cMarco: col.oscuro, cPunto: col.marca }, { forma: "cuadrado", punto: .5 })],
+    ["Marca · suave", M({ marcoEsq: "hoja", puntoEsq: "hoja", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca }, { punto: .62, aclarar: .3 })],
+    ["Logo · fluido", P({ modulos: "redondeado", marcoEsq: "redondeado", puntoEsq: "redondeado", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca })],
+    ["Logo · puntos", P({ modulos: "puntos", marcoEsq: "circulo", puntoEsq: "circulo", cMod: col.oscuro, cMarco: col.marca, cPunto: col.marca })],
+    ["Logo · hojas", P({ modulos: "hoja", marcoEsq: "hoja", puntoEsq: "hoja", cMod: col.oscuro, cMarco: col.marca, cPunto: col.oscuro })]
+  ];
+}
+function aplicarEstilo(q, est) {
+  const m = Object.assign({}, q.d.marca, est.marca || {});
+  Object.assign(q.d, clonar(est)); q.d.marca = m;
+  V.tab = q.d.modo === "marca" ? "marca" : "personalizado"; V.sub = q.d.modo === "marca" ? "general" : "personalizacion";
+}
+const disenoSinTocar = d => ["modulos", "marcoEsq", "puntoEsq", "cMod", "cMarco", "cPunto", "cFondo", "marco", "modo"].every(k => d[k] === DISENO_BASE[k]) && !d.logo && !d.marca.logo;
+async function galeriaEstilos(cont, q) {
+  const logo = logoDe(q);
+  cont.innerHTML = "";
+  cont.append(el("h3", "", "Estilos con tu logo"));
+  if (!logo) {
+    cont.append(el("p", "muted", "Sube tu logo y te mostramos estilos de marca como el de tu ejemplo: el logo de fondo, puntos encima y esquinas en el color de tu marca."));
+    cont.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { const img = await procesarImagen(fs[0], 1000); q.d.marca.logo = img; const col = await coloresDeLogo(img); aplicarEstilo(q, estilosRapidos(img, col)[0][1]); guardar(); pintar(); }));
+    return;
+  }
+  const col = await coloresDeLogo(logo), txt = contenidoQR(q, DB.base_url), g = el("div", "estilos");
+  estilosRapidos(logo, col).forEach(([nombre, est]) => {
+    let svg = ""; try { svg = svgQR(txt, est).svg; } catch (e) { return; }
+    const igual = q.d.modo === est.modo && ["modulos", "marcoEsq", "puntoEsq", "cMod", "cMarco"].every(k => q.d[k] === est[k]) && (est.modo !== "marca" || (q.d.marca.forma === est.marca.forma && q.d.marca.punto === est.marca.punto));
+    const b = el("button", "estilo" + (igual ? " on" : ""), `${svg}<span>${esc(nombre)}</span>`); b.type = "button";
+    b.onclick = () => { aplicarEstilo(q, est); guardar(); pintar(); };
+    g.append(b);
+  });
+  cont.append(g);
+  cont.append(el("div", "ayuda", "Toca un estilo para usarlo. Después puedes cambiar formas y colores abajo."));
+}
 
 /* ---------- vista del QR + verificacion ---------- */
 let LECTOR = null, tVer = 0;
