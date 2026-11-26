@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QR Studio">
+<meta name="description" content="Crea códigos QR personalizados con menú de enlaces, logo y diseño propio.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<title>QR Studio</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f7f7f8;--card:#fff;--line:#e5e5e8;--tx:#111;--mut:#6b6b73;--pri:#0a66d0;--ok:#15803d;--bad:#b91c1c}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;font-size:15px;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--tx)}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:#93c5fd}
+input[type=color]{padding:3px;height:42px;width:56px;flex:none}
+input[type=checkbox]{width:auto}
+input[type=range]{padding:0;border:0;accent-color:#111}
+.top{padding-top:max(12px,env(safe-area-inset-top))!important;display:flex;align-items:center;gap:18px;padding:12px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.marca{font-weight:800;font-size:18px;display:flex;align-items:center;gap:8px}
+.marca i{display:inline-block;width:22px;height:22px;border-radius:6px;background:#111}
+.nav{display:flex;gap:6px;margin-left:auto}
+.nav button{border:0;background:none;padding:8px 12px;border-radius:999px;color:var(--mut)}
+.nav button.on{background:#111;color:#fff}
+main{max-width:1240px;margin:0 auto;padding:22px;padding-bottom:max(22px,env(safe-area-inset-bottom))}
+.btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 18px;font-weight:600;display:inline-flex;align-items:center;gap:8px;color:var(--tx)}
+.btn.neg{background:#111;color:#fff;border-color:#111}
+.btn.azul{background:var(--pri);color:#fff;border-color:var(--pri);border-radius:999px;padding:13px 28px;font-size:16px}
+.btn.rojo{color:var(--bad);border-color:#fecaca;background:#fff5f5}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.redondo{width:48px;height:48px;padding:0;justify-content:center;border-radius:50%}
+.fila{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--mut);font-size:13px}
+h2{font-size:26px;font-weight:600;margin:6px 0 4px}
+h3{font-size:16px;margin:22px 0 8px}
+/* stepper */
+.pasos{display:flex;align-items:center;gap:14px;padding:6px 0 18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.paso{display:flex;align-items:center;gap:10px;white-space:nowrap;border:0;background:none;padding:0;color:var(--mut)}
+.paso b{width:30px;height:30px;border-radius:50%;border:1px solid #cfcfd4;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;color:var(--mut)}
+.paso.on{color:var(--tx);font-weight:600}.paso.on b{background:#111;border-color:#111;color:#fff}
+.paso.hecho b{background:#e9e9ec;border-color:#e9e9ec;color:#111}
+.linea{flex:1;height:1px;background:#d4d4d8}
+@media(max-width:700px){.paso span{display:none}}
+/* paso 1 */
+.centro{text-align:center;margin-bottom:26px}
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1150px;margin:0 auto}
+@media(max-width:760px){.tipos{grid-template-columns:1fr}}
+.tipo{display:flex;align-items:center;gap:20px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;position:relative}
+.tipo:hover,.tipo.sel{border-color:#111;background:#fafafa}
+.tipo svg{width:34px;height:34px;flex:none}
+.tipo .t{font-size:19px}.tipo .d{color:var(--mut);margin-top:3px}
+.chip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:#111;color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px}
+/* columnas */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:34px}
+@media(max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>*{min-width:0}
+.tabs{scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.der{border-left:1px solid var(--line);padding-left:30px}
+@media(max-width:980px){.der{border-left:0;padding-left:0}}
+.pegajoso{position:sticky;top:80px}
+.caja{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin:12px 0}
+.caja.gris{background:#f4f4f6}
+label.l{display:block;font-size:15px;margin:14px 0 7px}
+label.l .req{color:#dc2626}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.dos{grid-template-columns:1fr}}
+.ayuda{font-size:13px;color:var(--mut);margin-top:6px}
+.err{font-size:13px;color:var(--bad);margin-top:6px}
+.subir{border:1.5px dashed #d4d4d8;border-radius:12px;padding:22px;text-align:center;cursor:pointer;background:#fff;display:block}
+.subir:hover{border-color:#111}
+.subir input{display:none}
+.archivo{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.archivo img{width:50px;height:50px;object-fit:contain;border-radius:8px;background:#f4f4f6}
+.archivo span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{border:0;background:none;font-size:20px;color:var(--mut);padding:4px 8px}
+.num{width:28px;height:28px;border-radius:50%;background:#e9e9ec;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.plegar{display:flex;align-items:center;gap:10px;border:0;background:none;font-weight:700;font-size:16px;padding:14px 0;width:100%;text-align:left}
+.redes-sel{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px}
+.rd{width:50px;height:50px;border-radius:50%;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.rd.on{border:2px solid #111}
+.rd span{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.rd svg{width:17px;height:17px}
+.red-fila{display:grid;grid-template-columns:150px 1fr 36px;gap:10px;align-items:center;background:#f4f4f6;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.red-fila .n{display:flex;align-items:center;gap:8px}
+.red-fila .n span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.red-fila svg{width:15px;height:15px}
+@media(max-width:600px){.red-fila{grid-template-columns:1fr 36px}.red-fila .n{grid-column:1/3}}
+.pie{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:26px}
+/* telefono */
+.tel{width:300px;height:600px;margin:0 auto;border-radius:38px;border:9px solid #e8e8eb;box-shadow:0 0 0 1px #d4d4d8,0 20px 40px rgba(0,0,0,.08);overflow:hidden;background:#fff}
+.tel>div{height:100%;overflow:auto;zoom:.82}
+.tel .pg{min-height:100%}
+/* paso 3 */
+.tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin:16px 0 18px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 0;color:var(--mut);font-size:17px;white-space:nowrap;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--tx);border-color:#111}
+.tabs em{font-style:normal;font-size:11px;font-weight:700;background:#e9e9ec;border-radius:6px;padding:2px 6px;margin-left:6px;color:#444}
+.pills{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.pills button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:11px 20px;font-size:16px}
+.pills button.on{background:#111;color:#fff;border-color:#111}
+.opciones{display:flex;gap:12px;flex-wrap:wrap}
+.op{width:86px;height:86px;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:8px}
+.op.on{border:2px solid #111;background:#fafafa}
+.op svg{width:100%;height:100%}
+.op.ch{width:60px;height:60px}
+.marcos .op{width:96px;height:96px}
+.colores{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sw{width:46px;height:46px;border-radius:10px;border:1px solid var(--line);background:#fff;padding:7px}
+.sw.on{border:2px solid #111}
+.sw i{display:block;width:100%;height:100%;border-radius:7px}
+.hex{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:3px 3px 3px 12px;max-width:220px}
+.hex input[type=text]{border:0;padding:8px 0;outline:0}
+.hex input[type=color]{width:38px;height:36px;border:0}
+.toggle{display:flex;align-items:center;gap:10px;margin:12px 0}
+.toggle input{width:44px;height:24px;appearance:none;background:#d4d4d8;border-radius:999px;position:relative;cursor:pointer;border:0;padding:0}
+.toggle input:before{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.15s}
+.toggle input:checked{background:#111}.toggle input:checked:before{left:22px}
+.radio{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.radio{grid-template-columns:1fr}}
+.rb{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff;text-align:left}
+.rb.on{border-color:#111}
+.rb i{width:18px;height:18px;border-radius:50%;border:2px solid #9ca3af;flex:none;margin-top:2px}
+.rb.on i{border:5px solid #111}
+.rb small{display:block;color:var(--mut);margin-top:3px}
+.vista{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center}
+.vista .qr svg{width:100%;max-width:300px;height:auto;display:block;margin:0 auto}
+.estado{font-size:13px;margin-top:10px;min-height:18px}
+.estado.ok{color:var(--ok)}.estado.bad{color:var(--bad)}
+.avisos{margin-top:10px;text-align:left}
+.av{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;font-size:13px;padding:8px 10px;border-radius:10px;margin-top:8px}
+.av.info{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}
+.rango{display:flex;align-items:center;gap:10px}.rango span{width:48px;text-align:right;font-size:13px;color:var(--mut)}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f4f4f6;border-radius:12px;padding:12px;margin-top:16px}
+.res div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.res small{color:var(--mut);display:block}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#f4f4f6;border-radius:10px;padding:10px;white-space:pre-wrap;word-break:break-all;text-align:left;max-height:180px;overflow:auto}
+/* mis qrs */
+.lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-top:18px}
+.tarj{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.tarj .mini{background:#f4f4f6;border-radius:10px;padding:10px;display:flex;justify-content:center}
+.tarj .mini svg{width:150px;height:150px}
+.tarj b{font-size:16px}.tarj .dst{font-size:12px;color:var(--mut);word-break:break-all}
+.tarj .fila .btn{padding:7px 12px;font-size:13px}
+.vacio{text-align:center;padding:60px 20px;background:#fff;border:1px dashed #d4d4d8;border-radius:14px;margin-top:18px}
+@media(max-width:600px){main{padding:14px}.top{padding:10px 12px;gap:8px}.marca{font-size:16px}.nav button{padding:7px 8px;font-size:13px}.op{width:66px;height:66px}.marcos .op{width:78px;height:78px}.opciones{gap:8px}.sw{width:40px;height:40px}.tabs{gap:14px}.tabs button{font-size:14.5px}.tabs em{display:none}.pills button{padding:9px 14px;font-size:14px}.tel{width:100%;max-width:300px}.tipo{padding:16px}.tipo .chip{position:static;transform:none;margin-left:auto}}
+@media(max-width:980px){.p3 .der{order:-1}.p3 .vista .qr svg{max-width:240px}.p3 .der h3{display:none}.pegajoso{position:static}.der{margin-top:8px}}
+@media(min-width:601px) and (max-width:980px){main{padding:20px 26px}.tipos{gap:12px}.tel{width:320px}}
+@media(min-width:1600px){main{max-width:1400px}.cols{grid-template-columns:minmax(0,1fr) 420px}}
+@media(hover:none){.op,.sw,.btn,.pills button,.tipo{-webkit-tap-highlight-color:transparent}}
+input,select,textarea{font-size:16px}
+.marca,.nav button{white-space:nowrap}
+@media(max-width:600px){.p3 .vista .qr svg{max-width:200px}.p3 .vista{padding:14px}}
+@media(max-width:430px){.marca span{display:none}.nav{margin-left:auto}.nav button{font-size:14px;padding:8px 10px}}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:11px 18px;border-radius:10px;display:none;z-index:50;max-width:90vw}
+.oculto{display:none!important}
+</style>
+</head>
+<body>
+<div class="top"><div class="marca"><i></i><span>QR Studio</span></div>
+  <div class="nav"><button data-v="inicio">Mis QRs</button><button data-v="nuevo">+ Nuevo QR</button><button data-v="ajustes">Ajustes</button></div></div>
+<main id="main"></main>
+<div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" async></script>
+<script>
+// QR en JavaScript puro (port exacto de qr.py)
+const QRGen = (() => {
+  const ECC = [
+    [-1,7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+    [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [-1,13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+    [-1,17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]];
+  const NB = [
+    [-1,1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+    [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+    [-1,1,1,2,2,4,4,6,6,8,8,8,10,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+    [-1,1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81]];
+  const NIV = { L: [0, 1], M: [1, 0], Q: [2, 3], H: [3, 2] };
+  const rawMods = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; } return r; };
+  const dataCw = (v, i) => Math.floor(rawMods(v) / 8) - ECC[i][v] * NB[i][v];
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z & 0xFF; };
+  const divisor = d => { const r = new Array(d - 1).fill(0).concat([1]); let root = 1;
+    for (let k = 0; k < d; k++) { for (let j = 0; j < r.length; j++) { r[j] = mul(r[j], root); if (j + 1 < r.length) r[j] ^= r[j + 1]; } root = mul(root, 2); } return r; };
+  const rem = (data, div) => { const r = div.map(() => 0);
+    for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => r[i] ^= mul(c, f)); } return r; };
+
+  function make(text, nivel = "M") {
+    const [idx, fmt] = NIV[nivel];
+    const data = Array.from(new TextEncoder().encode(text));
+    let ver, cb;
+    for (ver = 1; ver <= 40; ver++) { cb = ver <= 9 ? 8 : 16; if (4 + cb + data.length * 8 <= dataCw(ver, idx) * 8) break; }
+    if (ver > 40) throw new Error("Texto demasiado largo");
+    const size = ver * 4 + 17;
+    const bits = []; const add = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >>> i) & 1); };
+    add(4, 4); add(data.length, cb); data.forEach(b => add(b, 8));
+    const cap = dataCw(ver, idx) * 8;
+    add(0, Math.min(4, cap - bits.length)); add(0, (8 - bits.length % 8) % 8);
+    for (let p = 0xEC; bits.length < cap; p ^= 0xEC ^ 0x11) add(p, 8);
+    const cw = []; for (let i = 0; i < bits.length; i += 8) { let v = 0; for (let j = 0; j < 8; j++) v = (v << 1) | bits[i + j]; cw.push(v); }
+
+    const nb = NB[idx][ver], el = ECC[idx][ver], total = Math.floor(rawMods(ver) / 8);
+    const short = nb - total % nb, sl = Math.floor(total / nb), dv = divisor(el);
+    const blocks = []; let k = 0;
+    for (let i = 0; i < nb; i++) { const n = sl - el + (i < short ? 0 : 1); let d = cw.slice(k, k + n); k += n;
+      const e = rem(d, dv); if (i < short) d = d.concat([0]); blocks.push(d.concat(e)); }
+    const fin = [];
+    for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== sl - el || j >= short) fin.push(b[i]); });
+
+    const m = [...Array(size)].map(() => Array(size).fill(false));
+    const fx = [...Array(size)].map(() => Array(size).fill(false));
+    const set = (x, y, v) => { m[y][x] = v; fx[y][x] = true; };
+    const formato = mk => { const d = fmt << 3 | mk; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+      const b = ((d << 10) | r) ^ 0x5412; const g = i => ((b >>> i) & 1) === 1;
+      for (let i = 0; i < 6; i++) set(8, i, g(i)); set(8, 7, g(6)); set(8, 8, g(7)); set(7, 8, g(8));
+      for (let i = 9; i < 15; i++) set(14 - i, 8, g(i)); for (let i = 0; i < 8; i++) set(size - 1 - i, 8, g(i));
+      for (let i = 8; i < 15; i++) set(8, size - 15 + i, g(i)); set(8, size - 8, true); };
+
+    for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+    for (const [cx, cy] of [[3, 3], [size - 4, 3], [3, size - 4]])
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const x = cx + dx, y = cy + dy;
+        if (x >= 0 && x < size && y >= 0 && y < size) { const d = Math.max(Math.abs(dx), Math.abs(dy)); set(x, y, d !== 2 && d !== 4); } }
+    let pos = [];
+    if (ver > 1) { const n = Math.floor(ver / 7) + 2, step = Math.floor((ver * 8 + n * 3 + 5) / (n * 4 - 4)) * 2;
+      for (let i = 0; i < n - 1; i++) pos.push(size - 7 - i * step); pos.push(6); pos.reverse(); }
+    const n = pos.length;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      if ((i === 0 && j === 0) || (i === 0 && j === n - 1) || (i === n - 1 && j === 0)) continue;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(pos[i] + dx, pos[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); }
+    formato(0);
+    if (ver >= 7) { let r = ver; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25);
+      const b = (ver << 12) | r; for (let i = 0; i < 18; i++) { const bit = ((b >>> i) & 1) === 1, a = size - 11 + i % 3, c = Math.floor(i / 3); set(a, c, bit); set(c, a, bit); } }
+
+    let i = 0;
+    for (let der = size - 1; der >= 1; der -= 2) { if (der === 6) der = 5;
+      for (let vt = 0; vt < size; vt++) for (let j = 0; j < 2; j++) { const x = der - j, up = ((der + 1) & 2) === 0, y = up ? size - 1 - vt : vt;
+        if (!fx[y][x] && i < fin.length * 8) { m[y][x] = ((fin[i >>> 3] >>> (7 - (i & 7))) & 1) === 1; i++; } } }
+
+    const MF = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, (x, y) => x % 3 === 0, (x, y) => (x + y) % 3 === 0,
+      (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,
+      (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+    const mask = mk => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fx[y][x] && MF[mk](x, y)) m[y][x] = !m[y][x]; };
+    const P1 = "10111010000", P2 = "00001011101";
+    const pen = () => { let p = 0; const lines = [];
+      for (let y = 0; y < size; y++) lines.push(m[y]);
+      for (let x = 0; x < size; x++) lines.push(m.map(r => r[x]));
+      for (const L of lines) { let run = 0, prev = null;
+        for (const v of L) { if (v === prev) run++; else { if (run >= 5) p += run - 2; run = 1; prev = v; } }
+        if (run >= 5) p += run - 2;
+        const s = L.map(v => v ? "1" : "0").join("");
+        for (let q = 0; q < size - 10; q++) { const seg = s.substr(q, 11); if (seg === P1 || seg === P2) p += 40; } }
+      for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++) { const c = m[y][x]; if (c === m[y][x + 1] && c === m[y + 1][x] && c === m[y + 1][x + 1]) p += 3; }
+      let dark = 0; m.forEach(r => r.forEach(v => dark += v ? 1 : 0)); const t2 = size * size;
+      p += (Math.floor((Math.abs(dark * 20 - t2 * 10) + t2 - 1) / t2) - 1) * 10; return p; };
+    let best = 0, bp = null;
+    for (let mk = 0; mk < 8; mk++) { mask(mk); formato(mk); const p = pen(); if (bp === null || p < bp) { bp = p; best = mk; } mask(mk); }
+    mask(best); formato(best);
+    return { size, version: ver, m, align: pos };
+  }
+  return { make };
+})();
+
+
+/* ===================== utilidades ===================== */
+const F = v => Math.round(v * 1000) / 1000;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const clonar = o => JSON.parse(JSON.stringify(o));
+const slugify = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const slugOk = s => /^[a-z0-9][a-z0-9-]*$/.test(s || "");
+const rgb = h => { h = String(h || "#000").replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16) || 0); };
+const lum = h => { const [r, g, b] = rgb(h).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+function b64(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+const b64texto = t => b64(new TextEncoder().encode(t));
+const dataABytes = u => { const b = atob(u.split(",")[1] || ""); const a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; };
+const normUrl = u => { u = (u || "").trim(); if (!u) return ""; return /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : "https://" + u; };
+const digitos = t => String(t || "").replace(/\D/g, "");
+const waLink = (num, msg) => "https://wa.me/" + digitos(num) + (msg ? "?text=" + encodeURIComponent(msg) : "");
+
+/* ===================== iconos (genericos, propios) ===================== */
+const ICON = {
+  link: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+  chat: '<path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12z"/>',
+  img: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
+  vcard: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M8 17c1-2 2.5-3 4-3s3 1 4 3"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+  wifi: '<path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><path d="M12 19h.01"/>',
+  video: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  fb: '<path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12z"/><path d="M12 16l-3.2-3.1a2 2 0 0 1 3.2-2.3 2 2 0 0 1 3.2 2.3z"/>',
+  app: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  lista: '<rect x="3" y="4" width="6" height="6" rx="1"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M13 6h8M13 9h5M13 16h8M13 19h5"/>',
+  sms: '<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
+  pago: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+  camara: '<rect x="3" y="6" width="18" height="14" rx="4"/><circle cx="12" cy="13" r="3.5"/><path d="M17 9h.01"/>',
+  play: '<path d="M8 5l11 7-11 7z"/>',
+  gente: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 15c3 0 5 1.5 5 4"/>',
+  hash: '<path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>',
+  marcador: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+  globo: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  envio: '<path d="M22 3L2 11l7 3 3 7z"/><path d="M9 14L22 3"/>',
+  tel: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+  candado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  descarga: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  copiar: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+  estrella: '<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>'
+};
+const svgIco = (k, color = "currentColor", w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICON[k] || ICON.link}</svg>`;
+
+/* redes sociales: icono generico + color de la marca */
+const REDES = [
+  ["facebook", "Facebook", "#1877f2", "gente", "https://facebook.com/tu-pagina"],
+  ["whatsapp", "WhatsApp", "#25d366", "chat", "52 1234 567 890"],
+  ["instagram", "Instagram", "#d62976", "camara", "https://instagram.com/tu-cuenta"],
+  ["youtube", "YouTube", "#ff0000", "play", "https://youtube.com/@tu-canal"],
+  ["tiktok", "TikTok", "#111111", "play", "https://tiktok.com/@tu-cuenta"],
+  ["messenger", "Messenger", "#0084ff", "chat", "https://m.me/tu-pagina"],
+  ["snapchat", "Snapchat", "#e8c400", "camara", "https://snapchat.com/add/tu-cuenta"],
+  ["linkedin", "LinkedIn", "#0a66c2", "gente", "https://linkedin.com/company/tu-empresa"],
+  ["x", "X", "#111111", "hash", "https://x.com/tu-cuenta"],
+  ["reddit", "Reddit", "#ff4500", "chat", "https://reddit.com/r/..."],
+  ["pinterest", "Pinterest", "#e60023", "marcador", "https://pinterest.com/tu-cuenta"],
+  ["telegram", "Telegram", "#229ed9", "envio", "https://t.me/tu-cuenta"],
+  ["wechat", "WeChat", "#07c160", "chat", "ID de WeChat o enlace"],
+  ["viber", "Viber", "#7360f2", "tel", "viber://chat?number=..."],
+  ["line", "LINE", "#06c755", "chat", "https://line.me/ti/p/..."],
+  ["threads", "Threads", "#111111", "hash", "https://threads.net/@tu-cuenta"],
+  ["web", "Sitio web", "#374151", "globo", "https://tusitio.com"],
+  ["email", "Email", "#6b7280", "mail", "correo@empresa.com"],
+  ["telefono", "Teléfono", "#0ea5e9", "tel", "55 1234 5678"]
+];
+const RED = Object.fromEntries(REDES.map(r => [r[0], { id: r[0], n: r[1], c: r[2], i: r[3], ph: r[4] }]));
+function urlRed(id, v) {
+  v = (v || "").trim();
+  if (id === "whatsapp" && !/^https?:/i.test(v)) return waLink(v);
+  if (id === "email" && !/^mailto:/i.test(v)) return "mailto:" + v;
+  if (id === "telefono" && !/^tel:/i.test(v)) return "tel:" + v.replace(/[^\d+]/g, "");
+  return normUrl(v);
+}
+const icoCirculo = (k, color) => `<span class="ic" style="background:${esc(color)}">${svgIco(k, "#fff")}</span>`;
+
+/* ===================== motor del QR (SVG) ===================== */
+function rr(x, y, w, h, r) {
+  let [a, b, c, e] = r.map(v => Math.max(0, Math.min(v, w / 2, h / 2)));
+  let p = `M${F(x + a)} ${F(y)}H${F(x + w - b)}`;
+  if (b) p += `A${F(b)} ${F(b)} 0 0 1 ${F(x + w)} ${F(y + b)}`;
+  p += `V${F(y + h - c)}`;
+  if (c) p += `A${F(c)} ${F(c)} 0 0 1 ${F(x + w - c)} ${F(y + h)}`;
+  p += `H${F(x + e)}`;
+  if (e) p += `A${F(e)} ${F(e)} 0 0 1 ${F(x)} ${F(y + h - e)}`;
+  p += `V${F(y + a)}`;
+  if (a) p += `A${F(a)} ${F(a)} 0 0 1 ${F(x + a)} ${F(y)}`;
+  return p + "Z";
+}
+const circ = (cx, cy, r) => `M${F(cx - r)} ${F(cy)}a${F(r)} ${F(r)} 0 1 0 ${F(2 * r)} 0a${F(r)} ${F(r)} 0 1 0 ${F(-2 * r)} 0Z`;
+function forma(tipo, x, y, s, k) {
+  if (tipo === "circulo") return circ(x + s / 2, y + s / 2, s / 2);
+  if (tipo === "redondeado") return rr(x, y, s, s, [s * .28, s * .28, s * .28, s * .28]);
+  if (tipo === "hoja") { const g = s * .45, p = s * .06; return rr(x, y, s, s, k === 0 ? [g, p, g, p] : [p, g, p, g]); }
+  return rr(x, y, s, s, [0, 0, 0, 0]);
+}
+function modulo(tipo, x, y, v) {
+  switch (tipo) {
+    case "puntos": return circ(x + .5, y + .5, .46);
+    case "redondeado": { const R = .5; return rr(x, y, 1, 1, [!v.u && !v.l ? R : 0, !v.u && !v.r ? R : 0, !v.d && !v.r ? R : 0, !v.d && !v.l ? R : 0]); }
+    case "hoja": return rr(x + .03, y + .03, .94, .94, [.47, .08, .47, .08]);
+    default: return `M${x} ${y}h1v1h-1Z`;
+  }
+}
+const DISENO_BASE = {
+  modo: "personalizado", modulos: "cuadrado", marcoEsq: "cuadrado", puntoEsq: "cuadrado",
+  cMod: "#000000", cMod2: "#2563eb", degradado: false, cMarco: "#000000", cPunto: "#000000", cFondo: "#ffffff", transparente: false,
+  margen: 4, logo: "", logoTam: 0.22, logoFondo: true,
+  marco: "ninguno", marcoColor: "#000000", marcoTexto: "ESCANÉAME", marcoTextoColor: "#ffffff",
+  marca: { logo: "", tam: 1, dx: 0, dy: 0, rot: 0, flipH: false, flipV: false, aclarar: 0.2, punto: 0.55, forma: "circulo" }
+};
+
+/* Devuelve {svg, vw, vh, version} — texto: contenido del QR, d: diseño */
+function svgQR(texto, d, opt = {}) {
+  d = Object.assign(clonar(DISENO_BASE), d || {}); d.marca = Object.assign(clonar(DISENO_BASE.marca), (d && d.marca) || {});
+  const marca = d.modo === "marca" && !!d.marca.logo, logoC = !marca && !!d.logo;
+  const Q = QRGen.make(texto, marca || logoC ? "H" : "M"), n = Q.size, m = Math.max(1, +d.margen || 4), S = n + 2 * m;
+  const id = "q" + Math.random().toString(36).slice(2, 7);
+  const esFinder = (x, y) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7);
+  let h0 = -1, h1 = -1;
+  if (logoC) { let k = Math.round(n * Math.min(.3, Math.max(.1, +d.logoTam))); if ((n - k) % 2) k++; h0 = (n - k) / 2; h1 = h0 + k; }
+  const enHueco = (x, y) => x >= h0 && x < h1 && y >= h0 && y < h1;
+  let defs = "", cuerpo = "";
+  const F3 = [[0, 0, 0], [n - 7, 0, 1], [0, n - 7, 2]];
+  const esquinas = (placa) => {
+    for (const [fx, fy, k] of F3) {
+      const x = fx + m, y = fy + m;
+      if (placa) cuerpo += `<path d="${forma(d.marcoEsq === "cuadrado" ? "cuadrado" : "redondeado", x - .5, y - .5, 8, k)}" fill="#ffffff"/>`;
+      cuerpo += `<path d="${forma(d.marcoEsq, x, y, 7, k)}${forma(d.marcoEsq, x + 1, y + 1, 5, k)}" fill="${esc(d.cMarco)}" fill-rule="evenodd"/>`;
+      cuerpo += `<path d="${forma(d.puntoEsq, x + 2, y + 2, 3, k)}" fill="${esc(d.cPunto)}"/>`;
+    }
+  };
+  if (!marca) {
+    const osc = (x, y) => x >= 0 && y >= 0 && x < n && y < n && Q.m[y][x] && !esFinder(x, y) && !enHueco(x, y);
+    if (!d.transparente) cuerpo += `<rect width="${S}" height="${S}" fill="${esc(d.cFondo)}"/>`;
+    let fill = esc(d.cMod);
+    if (d.degradado) { defs += `<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="${m}" y1="${m}" x2="${m + n}" y2="${m + n}"><stop offset="0" stop-color="${esc(d.cMod)}"/><stop offset="1" stop-color="${esc(d.cMod2)}"/></linearGradient>`; fill = `url(#${id}g)`; }
+    let p = "";
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (osc(x, y)) p += modulo(d.modulos, x + m, y + m, { u: osc(x, y - 1), d: osc(x, y + 1), l: osc(x - 1, y), r: osc(x + 1, y) });
+    cuerpo += `<path d="${p}" fill="${fill}"${d.modulos === "cuadrado" ? ' shape-rendering="crispEdges"' : ""}/>`;
+    esquinas(false);
+    if (logoC) {
+      const a = h0 + m, k = h1 - h0;
+      if (d.logoFondo) cuerpo += `<rect x="${a}" y="${a}" width="${k}" height="${k}" rx="1" fill="${esc(d.transparente ? "#ffffff" : d.cFondo)}"/>`;
+      cuerpo += `<image href="${esc(d.logo)}" x="${a + .6}" y="${a + .6}" width="${k - 1.2}" height="${k - 1.2}" preserveAspectRatio="xMidYMid meet"/>`;
+    }
+  } else {
+    const M = d.marca, A = n * Math.max(.3, +M.tam);
+    cuerpo += `<rect width="${S}" height="${S}" fill="#ffffff"/>`;
+    defs += `<clipPath id="${id}c"><rect x="${m}" y="${m}" width="${n}" height="${n}"/></clipPath>`;
+    const cx = m + n / 2 + (+M.dx || 0) * n, cy = m + n / 2 + (+M.dy || 0) * n;
+    cuerpo += `<g clip-path="url(#${id}c)"><g transform="translate(${F(cx)} ${F(cy)}) rotate(${+M.rot || 0}) scale(${M.flipH ? -1 : 1} ${M.flipV ? -1 : 1})"><image href="${esc(M.logo)}" x="${F(-A / 2)}" y="${F(-A / 2)}" width="${F(A)}" height="${F(A)}" preserveAspectRatio="xMidYMid meet"/></g></g>`;
+    if (+M.aclarar > 0) cuerpo += `<rect x="${m}" y="${m}" width="${n}" height="${n}" fill="#ffffff" fill-opacity="${F(+M.aclarar)}"/>`;
+    // zonas fijas: esquinas (8x8) y alineacion (5x5)
+    const fija = new Set(), al = [];
+    for (const [ox, oy] of [[0, 0], [n - 8, 0], [0, n - 8]]) for (let y = oy; y < oy + 8; y++) for (let x = ox; x < ox + 8; x++) fija.add(y * n + x);
+    const P = Q.align, k = P.length;
+    for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) {
+      if ((i === 0 && j === 0) || (i === 0 && j === k - 1) || (i === k - 1 && j === 0)) continue;
+      al.push([P[i], P[j]]); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) fija.add((P[j] + dy) * n + P[i] + dx);
+    }
+    const r = Math.min(.9, Math.max(.3, +M.punto)) / 2;
+    let po = "", pc = "";
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      if (fija.has(y * n + x)) continue;
+      const s = M.forma === "cuadrado" ? `M${F(x + m + .5 - r)} ${F(y + m + .5 - r)}h${F(2 * r)}v${F(2 * r)}h${F(-2 * r)}Z` : circ(x + m + .5, y + m + .5, r);
+      if (Q.m[y][x]) po += s; else pc += s;
+    }
+    cuerpo += `<path d="${pc}" fill="#ffffff"/><path d="${po}" fill="${esc(d.cMod)}"/>`;
+    for (const [ax, ay] of al) {
+      const x = ax + m, y = ay + m;
+      cuerpo += `<path d="${forma(d.marcoEsq === "cuadrado" ? "cuadrado" : "redondeado", x - 2.5, y - 2.5, 6, 0)}" fill="#ffffff"/>`;
+      cuerpo += `<path d="${forma(d.marcoEsq, x - 2, y - 2, 5, 0)}${forma(d.marcoEsq, x - 1, y - 1, 3, 0)}" fill="${esc(d.cMarco)}" fill-rule="evenodd"/>`;
+      cuerpo += `<path d="${forma(d.puntoEsq, x, y, 1, 0)}" fill="${esc(d.cPunto)}"/>`;
+    }
+    esquinas(true);
+  }
+  const fr = conMarco(cuerpo, S, d);
+  const wh = opt.px ? ` width="${opt.px}" height="${F(opt.px * fr.vh / fr.vw)}"` : "";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${F(fr.vw)} ${F(fr.vh)}"${wh}>${defs ? `<defs>${defs}</defs>` : ""}${fr.body}</svg>`;
+  return { svg, vw: fr.vw, vh: fr.vh, version: Q.version, nivel: marca || logoC ? "H" : "M" };
+}
+
+const MARCOS = [["ninguno", "Sin marco"], ["abajo", "Barra abajo"], ["arriba", "Barra arriba"], ["burbuja", "Burbuja"], ["texto", "Solo texto"], ["insignia", "Insignia"], ["ticket", "Ticket"]];
+function conMarco(inner, S, d) {
+  const t = d.marco || "ninguno";
+  if (t === "ninguno") return { vw: S, vh: S, body: inner };
+  const p = S * .06, hb = S * .2, R = S * .06, col = esc(d.marcoColor), tc = esc(d.marcoTextoColor), txt = esc(d.marcoTexto || "");
+  const fondoQR = esc(d.modo === "marca" || d.transparente ? "#ffffff" : d.cFondo);
+  const fs = Math.min(hb * .42, (S * 1.6) / Math.max(4, (d.marcoTexto || "").length));
+  const texto = (x, y, c, k = 1) => txt ? `<text x="${F(x)}" y="${F(y)}" fill="${c}" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="${F(fs * k)}" text-anchor="middle" dominant-baseline="central">${txt}</text>` : "";
+  const g = (x, y) => `<g transform="translate(${F(x)} ${F(y)})">${inner}</g>`;
+  let W, H, b;
+  switch (t) {
+    case "abajo": W = S + 2 * p; H = S + 2 * p + hb;
+      b = `<rect width="${F(W)}" height="${F(H)}" rx="${F(R)}" fill="${col}"/><rect x="${F(p)}" y="${F(p)}" width="${S}" height="${S}" rx="${F(R * .6)}" fill="${fondoQR}"/>${g(p, p)}${texto(W / 2, S + p + hb / 2 + p / 2, tc)}`; break;
+    case "arriba": W = S + 2 * p; H = S + 2 * p + hb;
+      b = `<rect width="${F(W)}" height="${F(H)}" rx="${F(R)}" fill="${col}"/><rect x="${F(p)}" y="${F(hb + p)}" width="${S}" height="${S}" rx="${F(R * .6)}" fill="${fondoQR}"/>${g(p, hb + p)}${texto(W / 2, hb / 2 + p / 2, tc)}`; break;
+    case "burbuja": W = S + 2 * p; H = S + 2 * p + hb * 1.25; {
+      const y0 = S + 2 * p + hb * .25, cx = W / 2;
+      b = `<rect x="${F(p * .25)}" y="${F(p * .25)}" width="${F(W - p * .5)}" height="${F(S + 1.5 * p)}" rx="${F(R)}" fill="${fondoQR}" stroke="${col}" stroke-width="${F(p * .5)}"/>${g(p, p)}<path d="M${F(cx - hb * .22)} ${F(y0 + .1)}L${F(cx)} ${F(y0 - hb * .2)}L${F(cx + hb * .22)} ${F(y0 + .1)}Z" fill="${col}"/><rect x="${F(p * 1.5)}" y="${F(y0)}" width="${F(W - 3 * p)}" height="${F(hb * .95)}" rx="${F(hb * .47)}" fill="${col}"/>${texto(cx, y0 + hb * .475, tc)}`;
+    } break;
+    case "texto": W = S; H = S + hb;
+      b = `${g(0, 0)}${texto(W / 2, S + hb * .42, col, 1.15)}`; break;
+    case "insignia": W = S + 4 * p; H = S + 4 * p + hb * .9; {
+      b = `<rect width="${F(W)}" height="${F(H)}" rx="${F(R * 2.2)}" fill="${col}"/><rect x="${F(2 * p)}" y="${F(2 * p)}" width="${S}" height="${S}" rx="${F(R)}" fill="${fondoQR}"/>${g(2 * p, 2 * p)}<rect x="${F(W * .18)}" y="${F(S + 2.6 * p)}" width="${F(W * .64)}" height="${F(hb * .8)}" rx="${F(hb * .4)}" fill="${tc}"/>${texto(W / 2, S + 2.6 * p + hb * .4, col, .9)}`;
+    } break;
+    case "ticket": W = S + 2 * p; H = S + 2 * p + hb;
+      b = `<rect x="${F(p * .3)}" y="${F(p * .3)}" width="${F(W - p * .6)}" height="${F(H - p * .6)}" rx="${F(R)}" fill="${fondoQR}" stroke="${col}" stroke-width="${F(p * .35)}" stroke-dasharray="${F(p * .9)} ${F(p * .6)}"/>${g(p, p)}${texto(W / 2, S + p + hb / 2, col)}`; break;
+    default: return { vw: S, vh: S, body: inner };
+  }
+  return { vw: W, vh: H, body: b };
+}
+
+/* SVG -> canvas (PNG) */
+async function canvasDe(svg, px, fondo) {
+  const r = svgQR.__dims(svg), k = Math.max(1, Math.round(px / r.w)), W = Math.round(r.w * k), H = Math.round(r.h * k);
+  const s = svg.replace("<svg ", `<svg width="${W}" height="${H}" `);
+  const url = URL.createObjectURL(new Blob([s], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error("No se pudo dibujar el QR")); img.src = url; });
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); if (fondo) { x.fillStyle = fondo; x.fillRect(0, 0, W, H); }
+    x.drawImage(img, 0, 0, W, H); return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+svgQR.__dims = svg => { const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/); return { w: +m[1], h: +m[2] }; };
+const pngBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+
+/* ===================== paginas publicables ===================== */
+const PAGINA_BASE = { portada: "", portadaColor: "#ffffff", fondo: "#eef0f3", fondo2: "", titulo: "#111827", texto: "#4b5563", btn: "#ffffff", btnTxt: "#111827", acento: "#111827", forma: "pildora", fuente: "sistema" };
+const TEMAS = [
+  ["Claro", { fondo: "#eef0f3", fondo2: "", titulo: "#111827", texto: "#4b5563", btn: "#ffffff", btnTxt: "#111827", acento: "#111827", portadaColor: "#ffffff" }],
+  ["Oscuro", { fondo: "#0f1115", fondo2: "#1f2430", titulo: "#ffffff", texto: "#c7cad1", btn: "#1f2430", btnTxt: "#ffffff", acento: "#ffffff", portadaColor: "#1f2430" }],
+  ["Verde", { fondo: "#eef5e8", fondo2: "#dcebd0", titulo: "#1f3311", texto: "#3f5a2c", btn: "#ffffff", btnTxt: "#1f3311", acento: "#4f8a2b", portadaColor: "#ffffff" }],
+  ["Café", { fondo: "#f6efe7", fondo2: "#ead9c6", titulo: "#3b2414", texto: "#6b4a33", btn: "#fffaf4", btnTxt: "#3b2414", acento: "#7c2d12", portadaColor: "#fffaf4" }],
+  ["Azul", { fondo: "#eaf2ff", fondo2: "#d6e6ff", titulo: "#0b2a5b", texto: "#36507a", btn: "#ffffff", btnTxt: "#0b2a5b", acento: "#1d4ed8", portadaColor: "#ffffff" }],
+  ["Rosa", { fondo: "#fff0f5", fondo2: "#ffe0ec", titulo: "#5b0b2c", texto: "#80405a", btn: "#ffffff", btnTxt: "#5b0b2c", acento: "#db2777", portadaColor: "#ffffff" }]
+];
+const FUENTES = { sistema: 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif', serif: 'Georgia,"Times New Roman",serif', redonda: '"Trebuchet MS","Segoe UI",Arial,sans-serif', mono: 'ui-monospace,Menlo,Consolas,monospace' };
+function cssPagina(p) {
+  p = Object.assign({}, PAGINA_BASE, p);
+  const rad = p.forma === "recto" ? "6px" : p.forma === "redondeado" ? "14px" : "999px";
+  const bg = p.fondo2 ? `linear-gradient(160deg,${p.fondo},${p.fondo2})` : p.fondo;
+  return `.pg{font-family:${FUENTES[p.fuente] || FUENTES.sistema};background:${bg};color:${p.texto};min-height:100vh;margin:0;--b:${p.btn};--bt:${p.btnTxt};--t:${p.titulo};--a:${p.acento};--r:${rad}}
+.pg *{box-sizing:border-box}.pg .wrap{max-width:460px;margin:0 auto;padding:18px 16px 34px}
+.pg .cover{background:${p.portadaColor};border-radius:22px;height:210px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pg .cover img{max-width:72%;max-height:82%;object-fit:contain}
+.pg h1{color:var(--t);font-size:25px;margin:6px 0 6px;line-height:1.2}.pg .desc{margin:0 0 12px;line-height:1.5;white-space:pre-line}
+.pg .lk{display:flex;align-items:center;gap:12px;background:var(--b);color:var(--bt);text-decoration:none;padding:9px 14px 9px 9px;border-radius:var(--r);margin:10px 0;box-shadow:0 1px 3px rgba(0,0,0,.1);font-weight:600;border:0;width:100%;font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.pg .ic{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#eef0f3}
+.pg .ic img{width:100%;height:100%;object-fit:cover}.pg .ic svg{width:20px;height:20px}
+.pg .lk .tx{flex:1}.pg .lk .ch{opacity:.45;font-size:20px}
+.pg .sec{font-size:13px;font-weight:700;margin:20px 0 2px;color:var(--t);opacity:.85}
+.pg .prim{display:block;text-align:center;background:var(--a);color:#fff;text-decoration:none;padding:15px;border-radius:var(--r);font-weight:700;margin:14px 0;border:0;width:100%;font:inherit;font-weight:700;cursor:pointer}
+.pg .card{background:var(--b);color:var(--bt);border-radius:16px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.pg .card small{display:block;opacity:.65;font-size:12px}.pg .card b{display:block;font-size:16px;margin-top:2px;word-break:break-all}
+.pg .fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)}.pg .fila:last-child{border:0}
+.pg .cp{border:1px solid rgba(0,0,0,.15);background:transparent;color:inherit;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.pg .monto{font-size:36px;font-weight:800;color:var(--t);margin:8px 0}
+.pg .gal img{width:100%;border-radius:16px;margin:8px 0;display:block}
+.pg .vid{position:relative;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000;margin:10px 0}.pg .vid iframe,.pg .vid video,.pg .vid div{position:absolute;inset:0;width:100%;height:100%;border:0;color:#fff;display:flex;align-items:center;justify-content:center}
+.pg .stars{display:flex;gap:6px;justify-content:center;margin:10px 0}.pg .stars button{background:none;border:0;cursor:pointer;padding:0}.pg .stars svg{width:40px;height:40px}
+.pg .stars button svg{fill:#d1d5db;stroke:#d1d5db}.pg .stars button.on svg{fill:#f59e0b;stroke:#f59e0b}
+.pg textarea,.pg input{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);margin:6px 0;background:#fff;color:#111}
+.pg .gate{max-width:380px;margin:0 auto;padding:80px 20px;text-align:center}.pg .gate svg{width:46px;height:46px}
+.pg .err{color:#b91c1c;font-size:14px;min-height:20px}`;
+}
+
+/* contexto de archivos: inline (data:) o archivos separados */
+function ctxArchivos(inline, preview) {
+  const mapa = new Map(), usados = new Set(), files = [];
+  const EXT = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "image/svg+xml": "svg", "application/pdf": "pdf", "video/mp4": "mp4", "video/webm": "webm", "text/calendar": "ics", "text/vcard": "vcf" };
+  return {
+    inline, preview, files,
+    asset(data, base) {
+      if (!data) return "";
+      if (inline) return data;
+      if (mapa.has(data)) return mapa.get(data);
+      const mime = (data.match(/^data:([^;,]+)/) || [])[1] || "application/octet-stream";
+      let nom = `${base}.${EXT[mime] || "bin"}`, i = 2;
+      while (usados.has(nom)) nom = `${base}-${i++}.${EXT[mime] || "bin"}`;
+      usados.add(nom); mapa.set(data, nom); files.push([nom, dataABytes(data)]); return nom;
+    }
+  };
+}
+const lk = (href, texto, ico, extra = "") => `<a class="lk" href="${esc(href)}" target="_blank" rel="noopener"${extra}>${ico}<span class="tx">${esc(texto)}</span><span class="ch">›</span></a>`;
+const portada = (q, ctx) => q.pagina && q.pagina.portada ? `<div class="cover"><img src="${esc(ctx.asset(q.pagina.portada, "portada"))}" alt=""></div>` : "";
+const titulo = (t, d) => (t ? `<h1>${esc(t)}</h1>` : "") + (d ? `<p class="desc">${esc(d)}</p>` : "");
+const listaRedes = (redes, txt = "Encuéntrame en") => {
+  const r = (redes || []).filter(x => x.url && RED[x.red]);
+  return r.length ? (txt ? `<div class="sec">${esc(txt)}</div>` : "") + r.map(x => lk(urlRed(x.red, x.url), RED[x.red].n, icoCirculo(RED[x.red].i, RED[x.red].c))).join("") : "";
+};
+function ics(c, id) {
+  const dt = v => (v || "").replace(/[-:]/g, "").slice(0, 13) + "00";
+  const e = v => String(v || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+  const ahora = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//QR Studio//ES", "BEGIN:VEVENT", `UID:${id}@qrstudio`, `DTSTAMP:${ahora}`, `DTSTART:${dt(c.inicio)}`, c.fin ? `DTEND:${dt(c.fin)}` : "", `SUMMARY:${e(c.titulo)}`, c.lugar ? `LOCATION:${e(c.lugar)}` : "", c.descripcion ? `DESCRIPTION:${e(c.descripcion)}` : "", c.url ? `URL:${normUrl(c.url)}` : "", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+}
+function vcardTexto(c) {
+  const e = v => String(v || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+  const L = ["BEGIN:VCARD", "VERSION:3.0", `N:${e(c.apellido)};${e(c.nombre)};;;`, `FN:${e([c.nombre, c.apellido].filter(Boolean).join(" "))}`];
+  if (c.empresa) L.push(`ORG:${e(c.empresa)}`); if (c.cargo) L.push(`TITLE:${e(c.cargo)}`);
+  if (c.celular) L.push(`TEL;TYPE=CELL:${c.celular}`); if (c.telefono) L.push(`TEL;TYPE=WORK:${c.telefono}`);
+  if (c.email) L.push(`EMAIL:${c.email}`); if (c.web) L.push(`URL:${normUrl(c.web)}`);
+  if (c.calle || c.ciudad || c.estado || c.cp || c.pais) L.push(`ADR;TYPE=WORK:;;${e(c.calle)};${e(c.ciudad)};${e(c.estado)};${e(c.cp)};${e(c.pais)}`);
+  if (c.nota) L.push(`NOTE:${e(c.nota)}`);
+  L.push("END:VCARD"); return L.join("\n");
+}
+const mapsLink = c => { const q = c.lat && c.lng ? `${c.lat},${c.lng}` : (c.direccion || ""); return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q); };
+function embedVideo(u) {
+  u = normUrl(u); let m;
+  if ((m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{6,})/))) return "https://www.youtube.com/embed/" + m[1];
+  if ((m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/))) return "https://player.vimeo.com/video/" + m[1];
+  return "";
+}
+
+/* ===================== tipos de QR ===================== */
+const T = (o) => o;
+const TIPOS = {
+  web: T({ n: "Sitio web", d: "Abre un sitio web o página de destino", i: "link", c: "#7c3aed", chip: "Más usados", modo: "editable",
+    def: { url: "" }, form: [{ k: "url", t: "url", l: "URL del sitio", ph: "https://tusitio.com", req: 1 }],
+    datos: c => normUrl(c.url) }),
+  pdf: T({ n: "PDF", d: "Abre un documento PDF", i: "file", c: "#e11d48", modo: "pagina",
+    def: { titulo: "", descripcion: "", archivo: null, url: "", boton: "Ver documento" },
+    form: [{ k: "titulo", t: "text", l: "Título", req: 1 }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "archivo", t: "archivo", l: "Archivo PDF", acc: "application/pdf", ayuda: "O pega abajo un enlace si el PDF ya está en internet." }, { k: "url", t: "url", l: "…o enlace al PDF", ph: "https://…/documento.pdf" }, { k: "boton", t: "text", l: "Texto del botón" }],
+    valida: c => c.archivo || c.url ? "" : "Sube un PDF o pega su enlace.",
+    pagina: (c, ctx, q) => portada(q, ctx) + titulo(c.titulo, c.descripcion) + `<a class="prim" href="${esc(c.archivo ? ctx.asset(c.archivo.data, "documento") : normUrl(c.url))}" target="_blank" rel="noopener">${esc(c.boton || "Ver documento")}</a>` }),
+  evento: T({ n: "Evento", d: "Comparte fecha, lugar y detalles", i: "cal", c: "#1d4ed8", chip: "Nuevo", modo: "pagina",
+    def: { titulo: "", inicio: "", fin: "", lugar: "", descripcion: "", url: "", boton: "Más información" },
+    form: [{ k: "titulo", t: "text", l: "Nombre del evento", req: 1 }, { k: "_", t: "dos", f: [{ k: "inicio", t: "datetime-local", l: "Inicio", req: 1 }, { k: "fin", t: "datetime-local", l: "Fin" }] }, { k: "lugar", t: "text", l: "Lugar o dirección" }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "url", t: "url", l: "Enlace (registro, boletos…)" }, { k: "boton", t: "text", l: "Texto del botón del enlace" }],
+    pagina: (c, ctx, q) => {
+      const f = c.inicio ? new Date(c.inicio).toLocaleString("es-MX", { dateStyle: "full", timeStyle: "short" }) : "";
+      const ff = c.fin ? new Date(c.fin).toLocaleString("es-MX", { dateStyle: "full", timeStyle: "short" }) : "";
+      const icsUrl = ctx.asset("data:text/calendar;base64," + b64texto(ics(c, q.id)), "evento");
+      return portada(q, ctx) + titulo(c.titulo, "") + `<div class="card"><small>Cuándo</small><b>${esc(f)}</b>${ff ? `<small style="margin-top:6px">Termina</small><b>${esc(ff)}</b>` : ""}</div>` +
+        (c.lugar ? `<div class="card"><small>Dónde</small><b>${esc(c.lugar)}</b></div>` : "") + (c.descripcion ? `<p class="desc">${esc(c.descripcion)}</p>` : "") +
+        `<a class="prim" href="${esc(icsUrl)}" download="evento.ics">Agregar a mi calendario</a>` +
+        (c.lugar ? lk(mapsLink({ direccion: c.lugar }), "Cómo llegar", icoCirculo("pin", "#16a34a")) : "") +
+        (c.url ? lk(normUrl(c.url), c.boton || "Más información", icoCirculo("link", "#1d4ed8")) : "");
+    } }),
+  whatsapp: T({ n: "WhatsApp", d: "Inicia un chat de WhatsApp al instante", i: "chat", c: "#16a34a", modo: "editable",
+    def: { numero: "", mensaje: "" }, form: [{ k: "numero", t: "tel", l: "Número con prefijo del país", ph: "52 1234 567 890", req: 1, ayuda: "Empieza por el prefijo del país, p. ej. 52 para México." }, { k: "mensaje", t: "textarea", l: "Mensaje predefinido (opcional)" }],
+    datos: c => waLink(c.numero, c.mensaje) }),
+  imagen: T({ n: "Imagen", d: "Muestra una imagen o foto", i: "img", c: "#c2410c", modo: "pagina",
+    def: { titulo: "", descripcion: "", imagenes: [], url: "", boton: "" },
+    form: [{ k: "titulo", t: "text", l: "Título" }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "imagenes", t: "imagenes", l: "Imágenes", req: 1 }, { k: "_", t: "dos", f: [{ k: "boton", t: "text", l: "Botón (opcional)", ph: "Ver más" }, { k: "url", t: "url", l: "Enlace del botón" }] }],
+    valida: c => c.imagenes.length ? "" : "Sube al menos una imagen.",
+    pagina: (c, ctx, q) => portada(q, ctx) + titulo(c.titulo, c.descripcion) + `<div class="gal">${c.imagenes.map((im, i) => `<img src="${esc(ctx.asset(im, "imagen-" + (i + 1)))}" alt="">`).join("")}</div>` + (c.url ? `<a class="prim" href="${esc(normUrl(c.url))}" target="_blank" rel="noopener">${esc(c.boton || "Ver más")}</a>` : "") }),
+  vcard: T({ n: "vCard", d: "Comparte una tarjeta de visita digital", i: "vcard", c: "#be123c", modo: "opcion",
+    def: { modo: "pagina", nombre: "", apellido: "", empresa: "", cargo: "", celular: "", telefono: "", email: "", web: "", calle: "", ciudad: "", estado: "", cp: "", pais: "México", nota: "", redes: [] },
+    form: [{ k: "modo", t: "select", l: "Cómo funciona", ops: [["pagina", "Página de contacto con botón “Guardar contacto” (recomendado)"], ["directo", "El contacto va dentro del QR (sin internet, QR más denso)"]] },
+      { k: "_", t: "dos", f: [{ k: "nombre", t: "text", l: "Nombre", req: 1 }, { k: "apellido", t: "text", l: "Apellido" }] }, { k: "_", t: "dos", f: [{ k: "empresa", t: "text", l: "Empresa" }, { k: "cargo", t: "text", l: "Cargo" }] },
+      { k: "_", t: "dos", f: [{ k: "celular", t: "tel", l: "Celular" }, { k: "telefono", t: "tel", l: "Teléfono de oficina" }] }, { k: "_", t: "dos", f: [{ k: "email", t: "email", l: "Email" }, { k: "web", t: "url", l: "Sitio web" }] },
+      { k: "calle", t: "text", l: "Calle y número" }, { k: "_", t: "dos", f: [{ k: "ciudad", t: "text", l: "Ciudad" }, { k: "estado", t: "text", l: "Estado" }] }, { k: "_", t: "dos", f: [{ k: "cp", t: "text", l: "Código postal" }, { k: "pais", t: "text", l: "País" }] },
+      { k: "nota", t: "textarea", l: "Nota" }, { k: "redes", t: "redes", l: "Redes sociales", si: c => c.modo === "pagina" }],
+    usaPagina: c => c.modo === "pagina", datos: c => vcardTexto(c),
+    pagina: (c, ctx, q) => {
+      const vcf = ctx.asset("data:text/vcard;base64," + b64texto(vcardTexto(c)), "contacto");
+      const dir = [c.calle, c.ciudad, c.estado, c.cp, c.pais].filter(Boolean).join(", ");
+      return portada(q, ctx) + titulo([c.nombre, c.apellido].filter(Boolean).join(" "), [c.cargo, c.empresa].filter(Boolean).join(" · ")) +
+        `<a class="prim" href="${esc(vcf)}" download="contacto.vcf">Guardar contacto</a>` +
+        (c.celular ? lk("tel:" + c.celular.replace(/[^\d+]/g, ""), "Llamar · " + c.celular, icoCirculo("tel", "#0ea5e9")) : "") +
+        (c.celular ? lk(waLink(c.celular), "WhatsApp", icoCirculo("chat", "#25d366")) : "") +
+        (c.telefono ? lk("tel:" + c.telefono.replace(/[^\d+]/g, ""), "Oficina · " + c.telefono, icoCirculo("tel", "#0369a1")) : "") +
+        (c.email ? lk("mailto:" + c.email, c.email, icoCirculo("mail", "#6b7280")) : "") + (c.web ? lk(normUrl(c.web), c.web, icoCirculo("globo", "#374151")) : "") +
+        (dir ? lk(mapsLink({ direccion: dir }), dir, icoCirculo("pin", "#16a34a")) : "") + (c.nota ? `<p class="desc">${esc(c.nota)}</p>` : "") + listaRedes(c.redes, "Redes");
+    } }),
+  redes: T({ n: "Redes sociales", d: "Comparte tu perfil y haz crecer tu audiencia", i: "share", c: "#7c3aed", modo: "pagina",
+    def: { titulo: "", descripcion: "", redes: [] }, form: [{ k: "titulo", t: "text", l: "Título", req: 1 }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "redes", t: "redes", l: "Tus redes sociales" }],
+    valida: c => c.redes.some(r => r.url) ? "" : "Agrega al menos una red social.",
+    pagina: (c, ctx, q) => portada(q, ctx) + titulo(c.titulo, c.descripcion) + listaRedes(c.redes, "") }),
+  wifi: T({ n: "WiFi", d: "Conéctate a una red WiFi", i: "wifi", c: "#059669", modo: "directo",
+    def: { ssid: "", clave: "", seguridad: "WPA", oculta: false },
+    form: [{ k: "ssid", t: "text", l: "Nombre de la red (SSID)", req: 1 }, { k: "seguridad", t: "select", l: "Seguridad", ops: [["WPA", "WPA / WPA2 / WPA3"], ["WEP", "WEP"], ["nopass", "Sin contraseña"]] }, { k: "clave", t: "text", l: "Contraseña", si: c => c.seguridad !== "nopass" }, { k: "oculta", t: "check", l: "Red oculta" }],
+    datos: c => { const e = v => String(v || "").replace(/([\\;,:"])/g, "\\$1"); return `WIFI:T:${c.seguridad};S:${e(c.ssid)};${c.seguridad !== "nopass" ? `P:${e(c.clave)};` : ""}${c.oculta ? "H:true;" : ""};`; } }),
+  video: T({ n: "Vídeo", d: "Muestra un vídeo con un escaneo", i: "video", c: "#e11d48", modo: "pagina",
+    def: { titulo: "", descripcion: "", url: "", archivo: null }, form: [{ k: "titulo", t: "text", l: "Título" }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "url", t: "url", l: "Enlace de YouTube o Vimeo", ph: "https://youtube.com/watch?v=…" }, { k: "archivo", t: "archivo", l: "…o sube un vídeo MP4 (máx. 25 MB)", acc: "video/mp4,video/webm" }],
+    valida: c => c.url || c.archivo ? "" : "Pega un enlace de vídeo o sube un archivo.",
+    pagina: (c, ctx, q) => {
+      let v = "";
+      if (c.archivo) v = `<div class="vid"><video controls playsinline src="${esc(ctx.asset(c.archivo.data, "video"))}"></video></div>`;
+      else { const e = embedVideo(c.url); v = ctx.preview ? `<div class="vid"><div>▶ Vídeo (se ve en la página publicada)</div></div>` : e ? `<div class="vid"><iframe src="${esc(e)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>` : ""; if (!e && c.url) v += lk(normUrl(c.url), "Ver vídeo", icoCirculo("play", "#e11d48")); }
+      return portada(q, ctx) + titulo(c.titulo, "") + v + (c.descripcion ? `<p class="desc">${esc(c.descripcion)}</p>` : "");
+    } }),
+  ubicacion: T({ n: "Ubicación", d: "Abre una ubicación en Google Maps", i: "pin", c: "#7c3aed", modo: "editable",
+    def: { direccion: "", lat: "", lng: "" }, form: [{ k: "direccion", t: "text", l: "Dirección o nombre del lugar", ph: "Av. Reforma 222, CDMX" }, { k: "_", t: "dos", f: [{ k: "lat", t: "text", l: "Latitud (opcional)" }, { k: "lng", t: "text", l: "Longitud (opcional)" }] }],
+    valida: c => c.direccion || (c.lat && c.lng) ? "" : "Escribe una dirección o las coordenadas.", datos: c => mapsLink(c) }),
+  email: T({ n: "Email", d: "Abre un email predefinido", i: "mail", c: "#059669", modo: "directo",
+    def: { para: "", asunto: "", mensaje: "" }, form: [{ k: "para", t: "email", l: "Enviar a", req: 1 }, { k: "asunto", t: "text", l: "Asunto" }, { k: "mensaje", t: "textarea", l: "Mensaje" }],
+    datos: c => { const p = []; if (c.asunto) p.push("subject=" + encodeURIComponent(c.asunto)); if (c.mensaje) p.push("body=" + encodeURIComponent(c.mensaje)); return "mailto:" + c.para.trim() + (p.length ? "?" + p.join("&") : ""); } }),
+  feedback: T({ n: "Feedback", d: "Solicita comentarios o una reseña", i: "fb", c: "#c2410c", modo: "pagina",
+    def: { titulo: "¿Cómo fue tu experiencia?", pregunta: "Califícanos y déjanos un comentario", enviarPor: "whatsapp", whatsapp: "", email: "", resena: "" },
+    form: [{ k: "titulo", t: "text", l: "Título", req: 1 }, { k: "pregunta", t: "text", l: "Texto de apoyo" }, { k: "enviarPor", t: "select", l: "Recibir comentarios por", ops: [["whatsapp", "WhatsApp"], ["email", "Email"]] }, { k: "whatsapp", t: "tel", l: "Tu WhatsApp", si: c => c.enviarPor === "whatsapp", req: 1 }, { k: "email", t: "email", l: "Tu email", si: c => c.enviarPor === "email", req: 1 }, { k: "resena", t: "url", l: "Enlace para dejar reseña (Google, etc.) — opcional" }],
+    pagina: (c, ctx, q) => portada(q, ctx) + titulo(c.titulo, c.pregunta) +
+      `<form data-fb data-wa="${esc(c.enviarPor === "whatsapp" ? digitos(c.whatsapp) : "")}" data-mail="${esc(c.enviarPor === "email" ? c.email : "")}" data-t="${esc(c.titulo)}"><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-s="${i}" aria-label="${i} estrellas">${svgIco("estrella")}</button>`).join("")}</div>` +
+      `<textarea name="c" rows="4" placeholder="Escribe tu comentario"></textarea><input name="n" placeholder="Tu nombre (opcional)"><button class="prim" type="submit">Enviar comentario</button></form>` +
+      (c.resena ? lk(normUrl(c.resena), "Déjanos una reseña", icoCirculo("estrella", "#f59e0b")) : "") }),
+  app: T({ n: "Enlace de app", d: "Redirige a diferentes tiendas de apps", i: "app", c: "#e11d48", modo: "pagina",
+    def: { nombre: "", descripcion: "", ios: "", android: "", web: "", auto: true },
+    form: [{ k: "nombre", t: "text", l: "Nombre de la app", req: 1 }, { k: "descripcion", t: "textarea", l: "Descripción" }, { k: "ios", t: "url", l: "Enlace en App Store (iPhone)" }, { k: "android", t: "url", l: "Enlace en Google Play (Android)" }, { k: "web", t: "url", l: "Enlace para computadora u otros" }, { k: "auto", t: "check", l: "Mandar automáticamente a la tienda del celular" }],
+    valida: c => c.ios || c.android || c.web ? "" : "Pon al menos un enlace.",
+    pagina: (c, ctx, q) => `<div data-app data-auto="${c.auto ? 1 : 0}" data-ios="${esc(normUrl(c.ios))}" data-android="${esc(normUrl(c.android))}"></div>` + portada(q, ctx) + titulo(c.nombre, c.descripcion) +
+      (c.ios ? lk(normUrl(c.ios), "Descargar en App Store", icoCirculo("app", "#111111")) : "") + (c.android ? lk(normUrl(c.android), "Descargar en Google Play", icoCirculo("play", "#16a34a")) : "") + (c.web ? lk(normUrl(c.web), "Abrir en la web", icoCirculo("globo", "#374151")) : "") }),
+  varios: T({ n: "Varios Enlaces", d: "Promociona tu negocio, servicio o perfil", i: "lista", c: "#7c3aed", modo: "pagina",
+    def: { titulo: "", descripcion: "", enlaces: [{ logo: "", nombre: "", url: "" }], redes: [] },
+    form: [{ k: "titulo", t: "text", l: "Título", req: 1 }, { k: "enlaces", t: "enlaces", l: "Tu lista de enlaces" }, { k: "redes", t: "redes", l: "Añadir redes sociales", plegable: 1 }, { k: "descripcion", t: "textarea", l: "Añadir descripción", plegable: 1 }],
+    valida: c => c.enlaces.some(e => e.url) || c.redes.some(r => r.url) ? "" : "Agrega al menos un enlace con URL.",
+    pagina: (c, ctx, q) => portada(q, ctx) + titulo(c.titulo, c.descripcion) + c.enlaces.filter(e => e.url).map((e, i) => lk(normUrl(e.url), e.nombre || e.url, e.logo ? `<span class="ic"><img src="${esc(ctx.asset(e.logo, "enlace-" + (i + 1)))}" alt=""></span>` : icoCirculo("link", "#6b7280"))).join("") + listaRedes(c.redes) }),
+  sms: T({ n: "SMS", d: "Envía un SMS al instante", i: "sms", c: "#059669", modo: "directo",
+    def: { numero: "", mensaje: "" }, form: [{ k: "numero", t: "tel", l: "Número", req: 1 }, { k: "mensaje", t: "textarea", l: "Mensaje" }],
+    datos: c => `SMSTO:${c.numero.replace(/[^\d+]/g, "")}:${c.mensaje || ""}` }),
+  pago: T({ n: "Pago", d: "Recibe pagos", i: "pago", c: "#c2410c", modo: "opcion",
+    def: { modo: "pagina", concepto: "", monto: "", moneda: "MXN", url: "", banco: "", beneficiario: "", clabe: "", cuenta: "", nota: "" },
+    form: [{ k: "modo", t: "select", l: "Cómo funciona", ops: [["pagina", "Página de pago (monto, link y datos de transferencia)"], ["link", "Directo a tu link de pago (Mercado Pago, PayPal, Stripe…)"]] },
+      { k: "url", t: "url", l: "Link de pago", ph: "https://mpago.la/…", req: c => c.modo === "link" }, { k: "concepto", t: "text", l: "Concepto", si: c => c.modo === "pagina" },
+      { k: "_", t: "dos", si: c => c.modo === "pagina", f: [{ k: "monto", t: "text", l: "Monto", ph: "250.00" }, { k: "moneda", t: "select", l: "Moneda", ops: [["MXN", "MXN"], ["USD", "USD"], ["EUR", "EUR"]] }] },
+      { k: "_", t: "dos", si: c => c.modo === "pagina", f: [{ k: "banco", t: "text", l: "Banco" }, { k: "beneficiario", t: "text", l: "Beneficiario" }] },
+      { k: "_", t: "dos", si: c => c.modo === "pagina", f: [{ k: "clabe", t: "text", l: "CLABE" }, { k: "cuenta", t: "text", l: "Cuenta o tarjeta" }] }, { k: "nota", t: "textarea", l: "Nota", si: c => c.modo === "pagina" }],
+    usaPagina: c => c.modo === "pagina", editable: c => c.modo === "link", datos: c => normUrl(c.url),
+    valida: c => c.modo === "link" ? (c.url ? "" : "Pon tu link de pago.") : (c.url || c.clabe || c.cuenta ? "" : "Pon un link de pago o datos de transferencia."),
+    pagina: (c, ctx, q) => {
+      const fila = (l, v) => v ? `<div class="fila"><div><small>${esc(l)}</small><b>${esc(v)}</b></div><button class="cp" type="button" data-copy="${esc(v)}">Copiar</button></div>` : "";
+      const m = c.monto ? Number(String(c.monto).replace(/[^\d.]/g, "")) : 0;
+      return portada(q, ctx) + titulo(c.concepto || "Pago", "") + (m ? `<div class="monto">${esc(m.toLocaleString("es-MX", { style: "currency", currency: c.moneda || "MXN" }))}</div>` : "") +
+        (c.url ? `<a class="prim" href="${esc(normUrl(c.url))}" target="_blank" rel="noopener">Pagar ahora</a>` : "") +
+        (c.clabe || c.cuenta ? `<div class="sec">Transferencia</div><div class="card">${fila("Banco", c.banco)}${fila("Beneficiario", c.beneficiario)}${fila("CLABE", c.clabe)}${fila("Cuenta o tarjeta", c.cuenta)}</div>` : "") +
+        (c.nota ? `<p class="desc">${esc(c.nota)}</p>` : "");
+    } })
+};
+
+/* ===================== reglas por QR ===================== */
+function usaPagina(q) {
+  const t = TIPOS[q.tipo];
+  if (t.modo === "pagina") return true;
+  if (t.modo === "opcion") return t.usaPagina(q.c) || (t.editable && t.editable(q.c) && q.editable);
+  if (t.modo === "editable") return !!q.editable;
+  return false;
+}
+const puedeEditable = q => { const t = TIPOS[q.tipo]; return t.modo === "editable" || (t.editable && t.editable(q.c)); };
+const esRedireccion = q => usaPagina(q) && (TIPOS[q.tipo].modo === "editable" || (TIPOS[q.tipo].editable && TIPOS[q.tipo].editable(q.c)));
+const urlPagina = (q, base) => `${String(base || "").trim().replace(/\/+$/, "")}/${q.slug}/`;
+const contenidoQR = (q, base) => usaPagina(q) ? urlPagina(q, base) : TIPOS[q.tipo].datos(q.c);
+
+/* ===================== cifrado (contrasena real) ===================== */
+async function cifrar(texto, clave) {
+  const enc = new TextEncoder(), salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey("raw", enc.encode(clave), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 200000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(texto)));
+  return { s: b64(salt), i: b64(iv), c: b64(ct) };
+}
+
+/* codigo que corre en la pagina publicada (no usa nada de esta app) */
+function RUNTIME() {
+  var cfg = JSON.parse(document.getElementById("cfg").textContent), app = document.getElementById("app");
+  function e(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function aviso(t) { app.innerHTML = '<div class="gate"><p>' + e(t) + "</p></div>"; }
+  var ahora = Date.now();
+  if (cfg.pausado || (cfg.inicio && ahora < Date.parse(cfg.inicio)) || (cfg.fin && ahora > Date.parse(cfg.fin))) { aviso(cfg.msg || "Este contenido no está disponible por ahora."); return; }
+  if (!cfg.enc) { app.innerHTML = document.getElementById("contenido").innerHTML; init(); return; }
+  app.innerHTML = '<form class="gate" id="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><h1>Contenido protegido</h1><p>Escribe la contraseña para continuar.</p><input type="password" id="pw" autocomplete="current-password" placeholder="Contraseña"><div class="err" id="er"></div><button class="prim" type="submit">Entrar</button></form>';
+  function u8(s) { var b = atob(s), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  document.getElementById("g").onsubmit = function (ev) {
+    ev.preventDefault(); var er = document.getElementById("er");
+    if (!window.crypto || !crypto.subtle) { er.textContent = "Abre esta página con https:// para poder desbloquearla."; return; }
+    er.textContent = "Verificando…";
+    var enc = new TextEncoder();
+    crypto.subtle.importKey("raw", enc.encode(document.getElementById("pw").value), "PBKDF2", false, ["deriveKey"]).then(function (k) {
+      return crypto.subtle.deriveKey({ name: "PBKDF2", salt: u8(cfg.enc.s), iterations: 200000, hash: "SHA-256" }, k, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+    }).then(function (key) { return crypto.subtle.decrypt({ name: "AES-GCM", iv: u8(cfg.enc.i) }, key, u8(cfg.enc.c)); })
+      .then(function (buf) { app.innerHTML = new TextDecoder().decode(buf); init(); })
+      .catch(function () { er.textContent = "Contraseña incorrecta."; });
+  };
+  function init() {
+    var r = app.querySelector("[data-redirect]"); if (r) { location.replace(r.getAttribute("data-redirect")); return; }
+    var ap = app.querySelector("[data-app]");
+    if (ap && ap.getAttribute("data-auto") === "1") {
+      var ua = navigator.userAgent, ios = ap.getAttribute("data-ios"), and = ap.getAttribute("data-android");
+      if (/iPhone|iPad|iPod/i.test(ua) && ios) location.href = ios; else if (/Android/i.test(ua) && and) location.href = and;
+    }
+    [].forEach.call(app.querySelectorAll("[data-copy]"), function (b) {
+      b.onclick = function () { var t = b.getAttribute("data-copy"); var ok = function () { b.textContent = "Copiado ✓"; };
+        if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, function () { prompt("Copia:", t); }); else prompt("Copia:", t); };
+    });
+    var fb = app.querySelector("[data-fb]");
+    if (fb) {
+      var est = 0, bs = fb.querySelectorAll("[data-s]");
+      [].forEach.call(bs, function (b) { b.onclick = function () { est = +b.getAttribute("data-s"); [].forEach.call(bs, function (x) { x.className = +x.getAttribute("data-s") <= est ? "on" : ""; }); }; });
+      fb.onsubmit = function (ev) {
+        ev.preventDefault();
+        var t = (est ? "Calificación: " + "★★★★★".slice(0, est) + "☆☆☆☆☆".slice(0, 5 - est) + " (" + est + "/5)\n" : "") + (fb.c.value ? "Comentario: " + fb.c.value + "\n" : "") + (fb.n.value ? "Nombre: " + fb.n.value : "");
+        var wa = fb.getAttribute("data-wa"), ml = fb.getAttribute("data-mail");
+        location.href = wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent(t) : "mailto:" + ml + "?subject=" + encodeURIComponent(fb.getAttribute("data-t") || "Comentario") + "&body=" + encodeURIComponent(t);
+      };
+    }
+  }
+}
+
+/* arma el contenido de la pagina (sin envoltura) */
+function contenidoPagina(q, ctx) {
+  if (esRedireccion(q)) { const u = TIPOS[q.tipo].datos(q.c); return `<div class="wrap" data-redirect="${esc(u)}"><p class="desc">Abriendo…</p><a class="prim" href="${esc(u)}">Continuar</a></div>`; }
+  return `<div class="wrap">${TIPOS[q.tipo].pagina(q.c, ctx, q)}</div>`;
+}
+const tituloPagina = q => q.c.titulo || q.c.nombre || q.c.concepto || q.nombre || "QR";
+/* pagina completa lista para publicar: {html, files} */
+async function paginaFinal(q) {
+  const conClave = !!(q.seg && q.seg.activa && q.seg.clave);
+  const ctx = ctxArchivos(conClave, false);
+  const cont = contenidoPagina(q, ctx);
+  const p = q.prog || {};
+  const cfg = { inicio: p.activarEn ? p.inicio || "" : "", fin: p.pausarEn ? p.fin || "" : "", pausado: !!p.pausado, msg: p.mensaje || "", enc: null };
+  let plantilla = "";
+  if (conClave) cfg.enc = await cifrar(cont, q.seg.clave); else plantilla = `<template id="contenido">${cont}</template>`;
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>${esc(conClave ? "Contenido protegido" : tituloPagina(q))}</title>
+<style>body{margin:0}${cssPagina(q.pagina)}</style>
+</head>
+<body>
+<div class="pg" id="app"></div>
+${plantilla}
+<script type="application/json" id="cfg">${JSON.stringify(cfg).replace(/</g, "\\u003c")}<\/script>
+<script>(${RUNTIME.toString()})();<\/script>
+<noscript><p style="padding:20px;font-family:sans-serif">Activa JavaScript para ver este contenido.</p></noscript>
+</body>
+</html>
+`;
+  return { html, files: ctx.files };
+}
+
+/* ===================== ZIP (sin librerias) ===================== */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = t[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
+function zip(archivos) {
+  const enc = new TextEncoder(), partes = [], central = []; let off = 0;
+  for (const [nombre, datos] of archivos) {
+    const nb = enc.encode(nombre), d = typeof datos === "string" ? enc.encode(datos) : datos, crc = CRC(d);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint32(14, crc, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nb.length, true);
+    partes.push(new Uint8Array(h.buffer), nb, d);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint32(16, crc, true); c.setUint32(20, d.length, true); c.setUint32(24, d.length, true); c.setUint16(28, nb.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nb); off += 30 + nb.length + d.length;
+  }
+  const tam = central.reduce((a, b) => a + b.length, 0), f = new DataView(new ArrayBuffer(22));
+  f.setUint32(0, 0x06054b50, true); f.setUint16(8, archivos.length, true); f.setUint16(10, archivos.length, true); f.setUint32(12, tam, true); f.setUint32(16, off, true);
+  return new Blob([...partes, ...central, new Uint8Array(f.buffer)], { type: "application/zip" });
+}
+
+/* ===================== estado y almacenamiento ===================== */
+const LOGO_SUS = "data:image/jpeg;base64,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KKKKACjJ9aKKADJ9TRk+poooAMn1NGT6miigAyfU0ZPqaKKADJ9TRk+poooAMn1NGT60UUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFKvX8KKBXP/Z", LOGO_CC = "data:image/png;base64,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";
+let DB = { base_url: "https://www.tuempresa.com/qrs", qrs: [] };
+let V = { vista: "inicio", id: null, paso: 1, tab: "personalizado", sub: "personalizacion", abiertos: {} };
+const $ = id => document.getElementById(id);
+const Q = () => DB.qrs.find(x => x.id === V.id);
+function nuevoQR(tipo) {
+  return { id: uid(), tipo, nombre: "", slug: "", editable: false, creado: Date.now(), c: clonar(TIPOS[tipo].def), pagina: clonar(PAGINA_BASE), d: clonar(DISENO_BASE),
+    seg: { activa: false, clave: "" }, prog: { activarEn: false, inicio: "", pausarEn: false, fin: "", pausado: false, mensaje: "Este código no está disponible por ahora." } };
+}
+function ejemplos() {
+  const a = nuevoQR("varios");
+  Object.assign(a, { nombre: "Sustentabll · enlaces", slug: "sustentabll" });
+  Object.assign(a.c, { titulo: "SUSTENTABLL", descripcion: "Productos sustentables para tu hogar y tu empresa.", enlaces: [{ logo: LOGO_SUS, nombre: "Tienda online", url: "https://sustentabll.com/" }],
+    redes: [{ red: "instagram", url: "https://www.instagram.com/sustentabll/" }, { red: "facebook", url: "https://www.facebook.com/profile.php?id=61591619257566" }, { red: "linkedin", url: "https://www.linkedin.com/company/sustentabll/" }, { red: "whatsapp", url: "https://wa.me/522211841803" }] });
+  Object.assign(a.pagina, TEMAS[2][1], { portada: LOGO_SUS });
+  Object.assign(a.d, { modo: "marca", marcoEsq: "redondeado", puntoEsq: "circulo", cMod: "#2f4a17", cMarco: "#416721", cPunto: "#416721" });
+  a.d.marca.logo = LOGO_SUS;
+  const b = nuevoQR("wifi");
+  Object.assign(b, { nombre: "Café Centro · WiFi" }); Object.assign(b.c, { ssid: "CafeCentro-Clientes", clave: "cafe2026" });
+  Object.assign(b.d, { modulos: "puntos", marcoEsq: "redondeado", puntoEsq: "circulo", cMod: "#7c2d12", cMarco: "#7c2d12", cPunto: "#7c2d12", logo: LOGO_CC, marco: "abajo", marcoColor: "#7c2d12", marcoTexto: "WIFI GRATIS" });
+  const c = nuevoQR("whatsapp");
+  Object.assign(c, { nombre: "Sustentabll · WhatsApp" }); Object.assign(c.c, { numero: "522211841803", mensaje: "Hola, quiero información de sus productos" });
+  Object.assign(c.d, { modulos: "redondeado", marcoEsq: "hoja", puntoEsq: "hoja", cMod: "#128c4a", cMarco: "#0b5d31", cPunto: "#0b5d31", marco: "burbuja", marcoColor: "#128c4a", marcoTexto: "ESCRÍBENOS" });
+  return [a, b, c];
+}
+const ALM = {
+  db: null,
+  abrir() { return new Promise(ok => { try { const r = indexedDB.open("qr-studio", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => { this.db = r.result; ok(); }; r.onerror = () => ok(); } catch (e) { ok(); } }); },
+  leer() { return new Promise(ok => { if (!this.db) { try { ok(JSON.parse(localStorage.getItem("qr-studio"))); } catch (e) { ok(null); } return; } try { const r = this.db.transaction("kv").objectStore("kv").get("db"); r.onsuccess = () => ok(r.result || null); r.onerror = () => ok(null); } catch (e) { ok(null); } }); },
+  escribir(v) { if (!this.db) { try { localStorage.setItem("qr-studio", JSON.stringify(v)); } catch (e) { toast("No hay espacio para guardar: descarga un respaldo"); } return; } try { this.db.transaction("kv", "readwrite").objectStore("kv").put(v, "db"); } catch (e) { } }
+};
+let tGuardar; const guardar = () => { clearTimeout(tGuardar); tGuardar = setTimeout(() => ALM.escribir(DB), 300); };
+function toast(t) { const m = $("toast"); m.textContent = t; m.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = "none", 3200); }
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+/* ===================== archivos subidos ===================== */
+function leerArchivo(f) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }); }
+async function procesarImagen(f, max = 900, foto = false) {
+  const url = await leerArchivo(f); if (/svg/.test(f.type)) return url;
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error("No se pudo leer la imagen")); i.src = url; });
+  const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return foto ? c.toDataURL("image/jpeg", .86) : c.toDataURL("image/png");
+}
+function inputArchivo(acc, alCargar, multiple) {
+  const lab = el("label", "subir", `${svgIco("descarga", "#111")}<div style="margin-top:8px">Haz clic aquí para subir o arrastra y suelta tu archivo</div><div class="muted">Tamaño máx.: 5 MB • ${esc(acc.includes("pdf") ? "PDF" : acc.includes("video") ? "MP4, WEBM" : "PNG, JPG, WEBP")}</div><input type="file" accept="${acc}"${multiple ? " multiple" : ""}>`);
+  lab.querySelector("svg").style.cssText = "width:22px;height:22px;transform:rotate(180deg)";
+  const inp = lab.querySelector("input");
+  const tomar = fs => { if (fs && fs.length) alCargar([...fs]); };
+  inp.onchange = () => tomar(inp.files);
+  lab.ondragover = e => { e.preventDefault(); lab.style.borderColor = "#111"; };
+  lab.ondragleave = () => lab.style.borderColor = "";
+  lab.ondrop = e => { e.preventDefault(); lab.style.borderColor = ""; tomar(e.dataTransfer.files); };
+  return lab;
+}
+function archivoFila(img, nombre, quitar) {
+  const d = el("div", "archivo", `${img ? `<img src="${esc(img)}" alt="">` : `<span class="num">${svgIco("file", "#111")}</span>`}<span>${esc(nombre)}</span><button class="x" type="button" title="Quitar">×</button>`);
+  d.querySelector(".x").onclick = quitar; return d;
+}
+
+/* ===================== navegacion ===================== */
+function ir(vista, extra = {}) { Object.assign(V, { vista }, extra); pintar(); window.scrollTo(0, 0); }
+document.querySelectorAll(".nav button").forEach(b => b.onclick = () => {
+  if (b.dataset.v === "nuevo") { V.id = null; ir("editor", { paso: 1 }); } else ir(b.dataset.v);
+});
+function pintar() {
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("on", (b.dataset.v === V.vista) || (b.dataset.v === "nuevo" && V.vista === "editor" && !Q())));
+  const m = $("main"); m.innerHTML = "";
+  if (V.vista === "inicio") vistaInicio(m); else if (V.vista === "ajustes") vistaAjustes(m); else vistaEditor(m);
+}
+
+/* ===================== Mis QRs ===================== */
+function vistaInicio(m) {
+  m.append(el("div", "fila", `<div style="flex:1"><h2>Mis QRs</h2><div class="muted">${DB.qrs.length} código(s). Cada uno con su propio contenido y diseño.</div></div>`));
+  const acc = el("div", "fila");
+  const bN = el("button", "btn neg", "+ Nuevo QR"); bN.onclick = () => { V.id = null; ir("editor", { paso: 1 }); };
+  const bZ = el("button", "btn", `${svgIco("descarga")} Exportar todo (ZIP)`); bZ.querySelector("svg").style.width = "18px"; bZ.onclick = exportarTodo;
+  const bR = el("button", "btn", "Descargar respaldo"); bR.onclick = () => bajar("qr-studio-respaldo.json", JSON.stringify({ app: "qr-studio", version: 3, ...DB }));
+  const lI = el("label", "btn", `Importar respaldo<input type="file" accept="application/json,.json" style="display:none">`);
+  lI.querySelector("input").onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); if (!Array.isArray(j.qrs)) throw 0; DB = { base_url: j.base_url || DB.base_url, qrs: j.qrs }; guardar(); pintar(); toast("Respaldo importado"); } catch (er) { toast("Ese archivo no es un respaldo válido"); } };
+  acc.append(bN, bZ, bR, lI); m.firstChild.append(acc);
+  if (!DB.qrs.length) { m.append(el("div", "vacio", `<h3>Aún no tienes QRs</h3><p class="muted">Crea el primero con “+ Nuevo QR”.</p>`)); return; }
+  const g = el("div", "lista");
+  DB.qrs.slice().sort((a, b) => b.creado - a.creado).forEach(q => {
+    const t = TIPOS[q.tipo], dst = usaPagina(q) ? urlPagina(q, DB.base_url) : "Datos dentro del QR (no necesita internet)";
+    let mini = ""; try { mini = svgQR(contenidoQR(q, DB.base_url), q.d).svg; } catch (e) { mini = "<p class='muted'>Falta contenido</p>"; }
+    const c = el("div", "tarj", `<div class="mini">${mini}</div><div class="fila" style="gap:8px"><span style="width:22px;height:22px;display:inline-flex">${svgIco(t.i, t.c)}</span><b>${esc(q.nombre || t.n)}</b></div><div class="muted">${esc(t.n)}${q.seg.activa && usaPagina(q) ? " · 🔒 con contraseña" : ""}</div><div class="dst">${esc(dst)}</div><div class="fila"></div><div class="confirma"></div>`);
+    const f = c.querySelectorAll(".fila")[1];
+    const b = (txt, fn, cls = "btn") => { const x = el("button", cls, txt); x.onclick = fn; f.append(x); };
+    b("Editar", () => { V.id = q.id; ir("editor", { paso: 2 }); }, "btn neg");
+    b("Diseño", () => { V.id = q.id; ir("editor", { paso: 3, tab: q.d.modo === "marca" ? "marca" : "personalizado", sub: q.d.modo === "marca" ? "general" : "personalizacion" }); });
+    b("PNG", () => descargarPNG(q, 1024));
+    b("Duplicar", () => { const n = clonar(q); n.id = uid(); n.creado = Date.now(); n.nombre = (q.nombre || t.n) + " (copia)"; if (n.slug) n.slug = slugLibre(n.slug + "-2"); DB.qrs.push(n); guardar(); pintar(); });
+    b("Eliminar", () => {
+      const k = c.querySelector(".confirma"); k.innerHTML = `<div class="av">¿Eliminar este QR? <button class="btn rojo" type="button">Sí, eliminar</button> <button class="btn" type="button">No</button></div>`;
+      const [si, no] = k.querySelectorAll("button"); si.onclick = () => { DB.qrs = DB.qrs.filter(x => x.id !== q.id); guardar(); pintar(); }; no.onclick = () => k.innerHTML = "";
+    }, "btn rojo");
+    g.append(c);
+  });
+  m.append(g);
+}
+function slugLibre(s, yo) { s = slugify(s) || "qr"; let k = s, i = 2; while (DB.qrs.some(x => x.slug === k && x.id !== yo)) k = `${s}-${i++}`; return k; }
+
+/* ===================== Ajustes ===================== */
+function baseDelSitio() { if (!/^https?:$/.test(location.protocol)) return ""; return location.origin + location.pathname.replace(/[^/]*$/, "") + "q"; }
+function vistaAjustes(m) {
+  m.innerHTML = `<h2>Ajustes</h2><div class="caja" style="max-width:760px"><label class="l">Dirección donde publicas tus páginas (base_url)</label><input id="aj_base" placeholder="https://www.tuempresa.com/qrs" value="${esc(DB.base_url)}">
+  <div class="fila" id="aj_sitio" style="margin-top:10px"></div><div class="ayuda">Los QR que abren una página apuntan a <b>base_url/nombre-del-qr/</b>. En GitHub Pages es la carpeta <b>q</b> de tu repositorio: <b>https://TU-USUARIO.github.io/TU-REPO/q</b>.
+  Si cambias esta dirección después de imprimir, esos QR dejarán de funcionar.</div><div id="aj_av"></div></div>
+  <div class="caja" style="max-width:760px"><h3 style="margin-top:0">Cómo se publica</h3><ol class="muted" style="line-height:1.7"><li>Revisa que la base_url sea la de tu sitio (en GitHub Pages se pone sola).</li><li>En <b>Mis QRs</b> usa <b>Exportar todo (ZIP)</b> y descomprímelo.</li><li>En GitHub: <b>Add file → Upload files</b> y arrastra la carpeta <b>q</b> del ZIP. Confirma con <b>Commit changes</b>.</li><li>Espera 1 o 2 minutos a que GitHub Pages se actualice, escanea cada QR con tu celular y luego imprime.</li></ol>
+  <p class="muted">Los QR de WiFi, Email, SMS y vCard directa llevan los datos dentro del código: funcionan sin publicar nada.</p></div>`;
+  const i = $("aj_base"), av = () => { const b = DB.base_url; $("aj_av").innerHTML = !/^https:\/\//.test(b) ? `<div class="av">Usa una dirección completa que empiece con https:// (la contraseña de las páginas solo funciona con https).</div>` : /tuempresa\.com/.test(b) ? `<div class="av">Todavía es la dirección de ejemplo.</div>` : `<div class="av info">Las páginas quedarán en ${esc(b.replace(/\/+$/, ""))}/…</div>`; };
+  i.oninput = () => { DB.base_url = i.value.trim(); guardar(); av(); }; av();
+  const sb = baseDelSitio();
+  if (sb && sb !== DB.base_url) { const b = el("button", "btn", "Usar la dirección de este sitio: " + esc(sb)); b.type = "button"; b.onclick = () => { DB.base_url = sb; i.value = sb; guardar(); av(); b.remove(); }; $("aj_sitio").append(b); }
+}
+
+/* ===================== Editor (3 pasos) ===================== */
+function vistaEditor(m) {
+  const q = Q();
+  const pasos = el("div", "pasos");
+  [["1", "Elige el tipo de QR"], ["2", "Crea el contenido"], ["3", "Personaliza y descarga"]].forEach(([n, t], i) => {
+    const p = +n, b = el("button", "paso" + (V.paso === p ? " on" : V.paso > p ? " hecho" : ""), `<b>${V.paso > p ? "✓" : n}</b><span>${t}</span>`);
+    b.onclick = () => { if (p === 1 || q) { if (p === 3 && !validar(q)) return; ir("editor", { paso: p }); } };
+    pasos.append(b); if (i < 2) pasos.append(el("div", "linea"));
+  });
+  m.append(pasos);
+  if (V.paso === 1 || !q) paso1(m); else if (V.paso === 2) paso2(m, q); else paso3(m, q);
+}
+function paso1(m) {
+  const q = Q();
+  m.append(el("div", "centro", `<h2>¿Qué quieres crear?</h2><div class="muted" style="font-size:17px">Elige un tipo. Puedes cambiarlo cuando quieras.</div>`));
+  const g = el("div", "tipos");
+  Object.entries(TIPOS).forEach(([k, t]) => {
+    const b = el("button", "tipo" + (q && q.tipo === k ? " sel" : ""), `${svgIco(t.i, t.c, 1.8)}<div><div class="t">${esc(t.n)}</div><div class="d">${esc(t.d)}</div></div>${t.chip ? `<span class="chip">${esc(t.chip)}</span>` : ""}`);
+    b.onclick = () => {
+      if (q) { if (q.tipo !== k) { q.tipo = k; q.c = clonar(TIPOS[k].def); q.editable = false; } }
+      else { const n = nuevoQR(k); n.nombre = ""; DB.qrs.push(n); V.id = n.id; }
+      guardar(); ir("editor", { paso: 2 });
+    };
+    g.append(b);
+  });
+  m.append(g);
+}
+
+/* ---------- formularios ---------- */
+function campo(f, obj, q, rehacer) {
+  if (f.si && !f.si(obj)) return null;
+  if (f.t === "dos") { const d = el("div", "dos"); f.f.forEach(x => { const c = campo(x, obj, q, rehacer); if (c) d.append(c); }); return d; }
+  const w = el("div");
+  const req = typeof f.req === "function" ? f.req(obj) : f.req;
+  if (f.plegable) {
+    const ab = V.abiertos[f.k] ?? !!(Array.isArray(obj[f.k]) ? obj[f.k].length : obj[f.k]);
+    const b = el("button", "plegar", `<span style="font-size:20px">${ab ? "−" : "+"}</span>${esc(f.l)}${ab ? '<span class="muted" style="margin-left:auto;font-weight:400">Ocultar</span>' : ""}`);
+    b.type = "button"; b.onclick = () => { V.abiertos[f.k] = !ab; rehacer(); }; w.append(b);
+    if (!ab) return w;
+  } else if (f.t !== "check") w.append(el("label", "l", `${esc(f.l)}${req ? ' <span class="req">*</span>' : ""}`));
+  const cambio = (v, rh) => { obj[f.k] = v; guardar(); actualizarVista(); if (rh) rehacer(); };
+  switch (f.t) {
+    case "textarea": { const i = el("textarea"); i.value = obj[f.k] || ""; i.placeholder = f.ph || ""; i.oninput = () => cambio(i.value); w.append(i); break; }
+    case "select": { const s = el("select"); s.innerHTML = f.ops.map(([v, l]) => `<option value="${esc(v)}"${obj[f.k] === v ? " selected" : ""}>${esc(l)}</option>`).join(""); s.onchange = () => cambio(s.value, true); w.append(s); break; }
+    case "check": { const l = el("label", "toggle", `<input type="checkbox"${obj[f.k] ? " checked" : ""}> ${esc(f.l)}`); l.querySelector("input").onchange = e => cambio(e.target.checked, true); w.append(l); break; }
+    case "color": { w.append(selectorColor(obj[f.k], v => cambio(v))); break; }
+    case "imagen": {
+      if (obj[f.k]) w.append(archivoFila(obj[f.k], "Imagen", () => cambio("", true)));
+      else w.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { try { cambio(await procesarImagen(fs[0], f.max || 900, f.foto), true); } catch (e) { toast(e.message); } }));
+      break;
+    }
+    case "imagenes": {
+      (obj[f.k] || []).forEach((im, i) => w.append(archivoFila(im, "Imagen " + (i + 1), () => { obj[f.k].splice(i, 1); cambio(obj[f.k], true); })));
+      w.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { for (const x of fs) { try { obj[f.k].push(await procesarImagen(x, 1600, true)); } catch (e) { toast(e.message); } } cambio(obj[f.k], true); }, true));
+      break;
+    }
+    case "archivo": {
+      if (obj[f.k]) w.append(archivoFila("", obj[f.k].nombre + " · " + (obj[f.k].tam / 1048576).toFixed(1) + " MB", () => cambio(null, true)));
+      else w.append(inputArchivo(f.acc, async fs => { const x = fs[0]; if (x.size > 25 * 1048576) return toast("El archivo pesa más de 25 MB"); cambio({ nombre: x.name, tam: x.size, tipo: x.type, data: await leerArchivo(x) }, true); }));
+      break;
+    }
+    case "enlaces": {
+      obj[f.k].forEach((e, i) => {
+        const c = el("div", "caja gris"), cab = el("div", "fila", `<span class="num">${i + 1}</span><span style="flex:1"></span>`);
+        const x = el("button", "x", "×"); x.type = "button"; x.onclick = () => { obj[f.k].splice(i, 1); cambio(obj[f.k], true); }; cab.append(x); c.append(cab);
+        c.append(el("label", "l", "Añade el logotipo de tu enlace"));
+        if (e.logo) c.append(archivoFila(e.logo, "Logo", () => { e.logo = ""; cambio(obj[f.k], true); }));
+        else c.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { e.logo = await procesarImagen(fs[0], 300); cambio(obj[f.k], true); }));
+        const d = el("div", "dos", `<div><label class="l">Nombre</label><input placeholder="p. ej. Mis redes sociales"></div><div><label class="l">URL</label><input placeholder="p. ej. https://domain.com"></div>`);
+        const [a, b] = d.querySelectorAll("input"); a.value = e.nombre; b.value = e.url;
+        a.oninput = () => { e.nombre = a.value; cambio(obj[f.k]); }; b.oninput = () => { e.url = b.value; cambio(obj[f.k]); };
+        c.append(d); w.append(c);
+      });
+      const add = el("button", "btn", "+ Añadir otro enlace"); add.type = "button"; add.onclick = () => { obj[f.k].push({ logo: "", nombre: "", url: "" }); cambio(obj[f.k], true); }; w.append(add);
+      break;
+    }
+    case "redes": {
+      w.append(el("div", "muted", "Selecciona los iconos de abajo para añadir tus redes sociales."));
+      const sel = el("div", "redes-sel");
+      REDES.forEach(([id, n, c, ic]) => {
+        const on = obj[f.k].some(r => r.red === id), b = el("button", "rd" + (on ? " on" : ""), `<span style="background:${c}">${svgIco(ic, "#fff")}</span>`);
+        b.type = "button"; b.title = n; b.onclick = () => { if (on) obj[f.k] = obj[f.k].filter(r => r.red !== id); else obj[f.k].push({ red: id, url: "" }); cambio(obj[f.k], true); };
+        sel.append(b);
+      });
+      w.append(sel);
+      obj[f.k].forEach(r => {
+        const R = RED[r.red]; if (!R) return;
+        const fl = el("div", "red-fila", `<div class="n"><span style="background:${R.c}">${svgIco(R.i, "#fff")}</span>${esc(R.n)}</div><input placeholder="${esc(R.ph)}"><button class="x" type="button">×</button>`);
+        const i = fl.querySelector("input"); i.value = r.url; i.oninput = () => { r.url = i.value; cambio(obj[f.k]); };
+        fl.querySelector(".x").onclick = () => { obj[f.k] = obj[f.k].filter(x => x !== r); cambio(obj[f.k], true); };
+        w.append(fl);
+        if (r.red === "whatsapp") w.append(el("div", "ayuda", "Empieza por el prefijo del país, p. ej. 522211841803"));
+      });
+      break;
+    }
+    default: { const i = el("input"); i.type = f.t; i.value = obj[f.k] || ""; i.placeholder = f.ph || ""; i.oninput = () => cambio(i.value); w.append(i); }
+  }
+  if (f.ayuda) w.append(el("div", "ayuda", esc(f.ayuda)));
+  return w;
+}
+function errores(q) {
+  const t = TIPOS[q.tipo], e = [];
+  const rev = fs => fs.forEach(f => { if (f.si && !f.si(q.c)) return; if (f.t === "dos") return rev(f.f); const r = typeof f.req === "function" ? f.req(q.c) : f.req; if (r && !String(q.c[f.k] ?? "").trim() && !(Array.isArray(q.c[f.k]) && q.c[f.k].length)) e.push(`Falta: ${f.l}`); });
+  rev(t.form);
+  if (t.valida) { const v = t.valida(q.c); if (v) e.push(v); }
+  if (usaPagina(q)) {
+    if (!slugOk(q.slug)) e.push("La dirección de la página solo puede tener minúsculas, números y guiones.");
+    else if (DB.qrs.some(x => x.id !== q.id && x.slug === q.slug && usaPagina(x))) e.push("Otra página ya usa esa dirección.");
+  }
+  try { TIPOS[q.tipo].datos && !usaPagina(q) && QRGen.make(TIPOS[q.tipo].datos(q.c), "M"); } catch (er) { e.push("El contenido es demasiado largo para un QR."); }
+  return e;
+}
+function validar(q) { const e = errores(q); if (e.length) { toast(e[0]); if (V.paso !== 2) ir("editor", { paso: 2 }); return false; } return true; }
+
+function paso2(m, q) {
+  const t = TIPOS[q.tipo];
+  const cols = el("div", "cols"), izq = el("div"), der = el("div", "der");
+  cols.append(izq, der); m.append(cols);
+  const rehacer = () => { const y = window.scrollY; izq.innerHTML = ""; formulario(izq, q, rehacer); window.scrollTo(0, y); };
+  formulario(izq, q, rehacer);
+  der.innerHTML = `<div class="pegajoso"><h3 style="text-align:center;margin-top:0;font-size:20px;font-weight:600">Vista previa</h3><div id="vp"></div></div>`;
+  const pie = el("div", "pie"); const atr = el("button", "btn redondo", "←"); atr.onclick = () => ir("editor", { paso: 1 });
+  const sig = el("button", "btn azul", "Siguiente ›"); sig.onclick = () => { if (validar(q)) ir("editor", { paso: 3, tab: q.d.modo === "marca" ? "marca" : "personalizado", sub: q.d.modo === "marca" ? "general" : "personalizacion" }); };
+  pie.append(atr, sig); izq.append(pie);
+  actualizarVista();
+}
+function formulario(izq, q, rehacer) {
+  const t = TIPOS[q.tipo];
+  izq.append(el("h2", "", q.tipo === "varios" ? "Añade tus enlaces" : esc(t.n)));
+  const nom = el("div", "", `<label class="l">Nombre del QR <span class="muted">(para identificarlo en Mis QRs)</span></label><input placeholder="p. ej. Menú del restaurante">`);
+  const ni = nom.querySelector("input"); ni.value = q.nombre;
+  ni.oninput = () => { const auto = slugLibre(q.nombre || t.n, q.id); q.nombre = ni.value; if (!q.slug || q.slug === auto) { q.slug = slugLibre(ni.value || t.n, q.id); const s = $("slug"); if (s) s.value = q.slug; } guardar(); actualizarVista(); };
+  izq.append(nom);
+  t.form.forEach(f => { const c = campo(f, q.c, q, rehacer); if (c) izq.append(c); });
+  if (puedeEditable(q)) {
+    const l = el("label", "toggle", `<input type="checkbox"${q.editable ? " checked" : ""}> <span><b>QR editable</b><br><span class="muted">Pasa por tu página: puedes cambiar el destino después sin reimprimir, y usar contraseña y programación.</span></span>`);
+    l.querySelector("input").onchange = e => { q.editable = e.target.checked; if (q.editable && !q.slug) q.slug = slugLibre(q.nombre || t.n, q.id); guardar(); rehacer(); actualizarVista(); };
+    izq.append(l);
+  }
+  if (usaPagina(q)) {
+    if (!q.slug) q.slug = slugLibre(q.nombre || t.n, q.id);
+    const s = el("div", "", `<label class="l">Dirección de la página</label><div class="hex" style="max-width:none;padding-left:12px"><span class="muted" style="white-space:nowrap">${esc(DB.base_url.replace(/\/+$/, ""))}/</span><input id="slug" type="text"></div><div class="ayuda">No la cambies después de imprimir el QR.</div>`);
+    const si = s.querySelector("input"); si.value = q.slug; si.oninput = () => { q.slug = slugify(si.value); guardar(); actualizarVista(); }; si.onblur = () => si.value = q.slug;
+    izq.append(s);
+    if (!esRedireccion(q)) disenoPagina(izq, q, rehacer);
+  }
+}
+function disenoPagina(izq, q, rehacer) {
+  const ab = !!V.abiertos.__pagina;
+  const b = el("button", "plegar", `<span style="font-size:20px">${ab ? "−" : "+"}</span>Diseño de la página (colores, portada, botones)`); b.type = "button";
+  b.onclick = () => { V.abiertos.__pagina = !ab; rehacer(); }; izq.append(b);
+  if (!ab) return;
+  const p = q.pagina, c = el("div", "caja");
+  c.append(el("label", "l", "Temas rápidos"));
+  const tm = el("div", "fila"); TEMAS.forEach(([n, v]) => { const x = el("button", "btn", `<span style="width:16px;height:16px;border-radius:50%;background:${v.acento};display:inline-block"></span>${n}`); x.type = "button"; x.onclick = () => { Object.assign(p, v); guardar(); rehacer(); actualizarVista(); }; tm.append(x); }); c.append(tm);
+  c.append(campo({ k: "portada", t: "imagen", l: "Portada / logo de la página", max: 900 }, p, q, rehacer));
+  const colores = [["portadaColor", "Fondo de la portada"], ["fondo", "Fondo de la página"], ["titulo", "Títulos"], ["texto", "Texto"], ["btn", "Botones"], ["btnTxt", "Texto de botones"], ["acento", "Botón principal"]];
+  const g = el("div", "dos"); colores.forEach(([k, l]) => { const w = el("div"); w.append(el("label", "l", l), selectorColor(p[k], v => { p[k] = v; guardar(); actualizarVista(); }, true)); g.append(w); }); c.append(g);
+  const dg = el("label", "toggle", `<input type="checkbox"${p.fondo2 ? " checked" : ""}> Fondo con degradado`);
+  dg.querySelector("input").onchange = e => { p.fondo2 = e.target.checked ? "#dbeafe" : ""; guardar(); rehacer(); actualizarVista(); }; c.append(dg);
+  if (p.fondo2) { c.append(el("label", "l", "Segundo color del degradado")); c.append(selectorColor(p.fondo2, v => { p.fondo2 = v; guardar(); actualizarVista(); }, true)); }
+  const d2 = el("div", "dos");
+  [["forma", "Forma de los botones", [["pildora", "Píldora"], ["redondeado", "Redondeado"], ["recto", "Recto"]]], ["fuente", "Tipo de letra", [["sistema", "Moderna"], ["serif", "Clásica (serif)"], ["redonda", "Amigable"], ["mono", "Técnica"]]]].forEach(([k, l, ops]) => d2.append(campo({ k, t: "select", l, ops }, p, q, () => { rehacer(); })));
+  c.append(d2); izq.append(c);
+}
+
+/* ---------- vista previa paso 2 ---------- */
+let tVista;
+function actualizarVista() { clearTimeout(tVista); tVista = setTimeout(_vista, 120); }
+function _vista() {
+  const q = Q(); if (!q) return;
+  if (V.paso === 2 && $("vp")) {
+    const vp = $("vp");
+    if (usaPagina(q) && !esRedireccion(q)) {
+      const ctx = ctxArchivos(true, true); let html = "";
+      try { html = contenidoPagina(q, ctx); } catch (e) { html = `<div class="wrap"><p>${esc(e.message)}</p></div>`; }
+      vp.innerHTML = `<div class="tel"><div><style>${cssPagina(q.pagina).replace(/min-height:100vh/, "min-height:100%")}</style><div class="pg">${html}</div></div></div>` + (q.seg.activa ? `<div class="av info">🔒 Al abrirla se pedirá contraseña.</div>` : "");
+      vp.querySelectorAll("a").forEach(a => a.addEventListener("click", e => e.preventDefault()));
+    } else {
+      let txt = "", err = "";
+      try { txt = contenidoQR(q, DB.base_url); } catch (e) { err = e.message; }
+      const que = { web: "Abre el sitio web", whatsapp: "Abre un chat de WhatsApp", ubicacion: "Abre el mapa", email: "Abre un correo nuevo", sms: "Abre un SMS nuevo", wifi: "Conecta el celular a la red WiFi", vcard: "Ofrece guardar el contacto", pago: "Abre tu link de pago" }[q.tipo] || "";
+      let mini = ""; try { mini = svgQR(txt, q.d).svg; } catch (e) { err = err || "El contenido es demasiado largo."; }
+      vp.innerHTML = `<div class="vista"><div class="qr" style="max-width:220px;margin:0 auto">${mini}</div><h3>Al escanear</h3><p>${esc(esRedireccion(q) ? "Pasa por tu página y luego: " + que.toLowerCase() : que)}</p><div class="mono">${esc(esRedireccion(q) ? TIPOS[q.tipo].datos(q.c) : txt)}</div>${err ? `<div class="err">${esc(err)}</div>` : ""}<p class="muted">${usaPagina(q) ? "Código editable: apunta a " + esc(urlPagina(q, DB.base_url)) : "Los datos van dentro del QR: funciona sin internet y no se puede cambiar después."}</p></div>`;
+    }
+  }
+  if (V.paso === 3 && $("vq")) vistaQR(q);
+}
+
+/* ===================== Paso 3: personaliza y descarga ===================== */
+const SW = ["#000000", "#1f2937", "#416721", "#7c2d12", "#1d4ed8", "#7c3aed", "#be123c", "#0f766e"];
+function selectorColor(valor, cb, compacto) {
+  const w = el("div", "colores");
+  if (!compacto) SW.forEach(c => { const b = el("button", "sw" + (String(valor).toLowerCase() === c ? " on" : ""), `<i style="background:${c}"></i>`); b.type = "button"; b.onclick = () => { cb(c); w.replaceWith(selectorColor(c, cb, compacto)); }; w.append(b); });
+  const h = el("div", "hex", `<input type="text" maxlength="7"><input type="color">`), [tx, co] = h.querySelectorAll("input");
+  tx.value = valor; co.value = /^#[0-9a-f]{6}$/i.test(valor) ? valor : "#000000";
+  tx.oninput = () => { if (/^#[0-9a-f]{6}$/i.test(tx.value)) { co.value = tx.value; cb(tx.value.toLowerCase()); } };
+  co.oninput = () => { tx.value = co.value; cb(co.value); w.querySelectorAll(".sw").forEach(s => s.classList.remove("on")); };
+  w.append(h); return w;
+}
+function opciones(valores, actual, dibujo, cb, cls = "") {
+  const w = el("div", "opciones " + cls);
+  valores.forEach(([v, t]) => { const b = el("button", "op" + (actual === v ? " on" : ""), dibujo(v)); b.type = "button"; b.title = t; b.onclick = () => { cb(v); w.querySelectorAll(".op").forEach(x => x.classList.remove("on")); b.classList.add("on"); }; w.append(b); });
+  return w;
+}
+const MUESTRA = [[1, 1, 0, 1, 0], [0, 1, 1, 1, 1], [1, 1, 0, 0, 1], [1, 0, 1, 1, 1], [0, 1, 1, 0, 1]];
+const dibModulo = v => { let p = ""; const o = (x, y) => MUESTRA[y] && MUESTRA[y][x]; for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) if (o(x, y)) p += modulo(v, x, y, { u: o(x, y - 1), d: o(x, y + 1), l: o(x - 1, y), r: o(x + 1, y) }); return `<svg viewBox="-.3 -.3 5.6 5.6"><path d="${p}" fill="#111"/></svg>`; };
+const dibMarco = v => `<svg viewBox="-1 -1 9 9"><path d="${forma(v, 0, 0, 7, 0)}${forma(v, 1, 1, 5, 0)}" fill="none" stroke="#111" stroke-width=".9"/></svg>`;
+const dibPunto = v => `<svg viewBox="-1 -1 5 5"><path d="${forma(v, 0, 0, 3, 0)}" fill="#111"/></svg>`;
+const FORMAS_MOD = [["cuadrado", "Cuadrados"], ["puntos", "Puntos"], ["redondeado", "Fluido"], ["hoja", "Hojas"]];
+const FORMAS_ESQ = [["cuadrado", "Cuadrado"], ["redondeado", "Redondeado"], ["circulo", "Círculo"], ["hoja", "Hoja"]];
+function rango(l, v, min, max, paso, cb, fmt = x => Math.round(x * 100) + "%") {
+  const w = el("div", "", `<label class="l">${esc(l)}</label><div class="rango"><input type="range" min="${min}" max="${max}" step="${paso}" value="${v}"><span>${fmt(v)}</span></div>`);
+  const i = w.querySelector("input"), s = w.querySelector("span"); i.oninput = () => { s.textContent = fmt(+i.value); cb(+i.value); }; return w;
+}
+function paso3(m, q) {
+  const cols = el("div", "cols p3"), izq = el("div"), der = el("div", "der"); cols.append(izq, der); m.append(cols);
+  izq.append(el("h2", "", "Personaliza tu código QR"));
+  const tabs = el("div", "tabs");
+  [["personalizado", "Diseños personalizados", ""], ["marca", "Diseños de marca", "NUEVO"]].forEach(([k, l, e]) => {
+    const b = el("button", V.tab === k ? "on" : "", esc(l) + (e ? `<em>${e}</em>` : "")); b.type = "button";
+    b.onclick = () => { V.tab = k; V.sub = k === "marca" ? "general" : "personalizacion"; q.d.modo = k; if (k === "marca" && !q.d.marca.logo && (q.pagina.portada || q.d.logo)) q.d.marca.logo = q.pagina.portada || q.d.logo; guardar(); pintar(); };
+    tabs.append(b);
+  });
+  izq.append(tabs);
+  const subs = V.tab === "marca" ? [["general", "General"], ["personalizacion", "Personalización"], ["marco", "Marco"], ["clave", "Contraseña"], ["prog", "Programación"]] : [["marco", "Marco"], ["personalizacion", "Personalización"], ["logo", "Logo"], ["clave", "Contraseña"], ["prog", "Programación"]];
+  const pills = el("div", "pills");
+  subs.forEach(([k, l]) => { const b = el("button", V.sub === k ? "on" : "", l); b.type = "button"; b.onclick = () => { V.sub = k; pintar(); }; pills.append(b); });
+  izq.append(pills);
+  const panel = el("div"); izq.append(panel);
+  const d = q.d, cam = (rh) => { guardar(); actualizarVista(); if (rh) pintar(); };
+  const sec = t => panel.append(el("h3", "", t));
+  if (V.sub === "personalizacion") {
+    sec(V.tab === "marca" ? "Forma de los puntos" : "Forma del QR");
+    if (V.tab === "marca") panel.append(opciones([["circulo", "Círculos"], ["cuadrado", "Cuadrados"]], d.marca.forma, v => dibModulo(v === "circulo" ? "puntos" : "cuadrado"), v => { d.marca.forma = v; cam(); }));
+    else panel.append(opciones(FORMAS_MOD, d.modulos, dibModulo, v => { d.modulos = v; cam(); }));
+    const dd = el("div", "dos"), a = el("div"), b = el("div");
+    a.append(el("h3", "", "Forma del cuadrado de esquina"), opciones(FORMAS_ESQ, d.marcoEsq, dibMarco, v => { d.marcoEsq = v; cam(); }, "ch"));
+    b.append(el("h3", "", "Forma del punto de esquina"), opciones(FORMAS_ESQ, d.puntoEsq, dibPunto, v => { d.puntoEsq = v; cam(); }, "ch"));
+    dd.append(a, b); panel.append(dd);
+    sec(V.tab === "marca" ? "Color de los puntos" : "Color de los módulos"); panel.append(selectorColor(d.cMod, v => { d.cMod = v; cam(); }));
+    if (V.tab !== "marca") {
+      const dg = el("label", "toggle", `<input type="checkbox"${d.degradado ? " checked" : ""}> Degradado`); dg.querySelector("input").onchange = e => { d.degradado = e.target.checked; cam(true); }; panel.append(dg);
+      if (d.degradado) { panel.append(el("label", "l", "Segundo color")); panel.append(selectorColor(d.cMod2, v => { d.cMod2 = v; cam(); })); }
+    }
+    sec("Color del cuadrado de las esquinas"); panel.append(selectorColor(d.cMarco, v => { d.cMarco = v; cam(); }));
+    sec("Color del punto de las esquinas"); panel.append(selectorColor(d.cPunto, v => { d.cPunto = v; cam(); }));
+    if (V.tab !== "marca") {
+      sec("Fondo"); panel.append(selectorColor(d.cFondo, v => { d.cFondo = v; cam(); }, true));
+      const tr = el("label", "toggle", `<input type="checkbox"${d.transparente ? " checked" : ""}> Fondo transparente (PNG/SVG)`); tr.querySelector("input").onchange = e => { d.transparente = e.target.checked; cam(); }; panel.append(tr);
+    }
+    panel.append(rango("Margen blanco alrededor", d.margen, 2, 6, 1, v => { d.margen = v; cam(); }, v => v + " mód."));
+    const r = el("button", "btn", "Restablecer colores y formas"); r.type = "button"; r.style.marginTop = "16px";
+    r.onclick = () => { Object.assign(d, { modulos: "cuadrado", marcoEsq: "cuadrado", puntoEsq: "cuadrado", cMod: "#000000", cMarco: "#000000", cPunto: "#000000", cFondo: "#ffffff", transparente: false, degradado: false, margen: 4 }); cam(true); }; panel.append(r);
+  } else if (V.sub === "marco") {
+    sec("Marco alrededor del QR");
+    const ejemplo = svgQR("QR", { margen: 2 });
+    panel.append(opciones(MARCOS, d.marco, v => v === "ninguno" ? `<svg viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M5.6 18.4L18.4 5.6"/></svg>` : svgQR("QR", { margen: 2, marco: v, marcoTexto: "SCAN ME", marcoColor: "#111", marcoTextoColor: "#fff" }).svg, v => { d.marco = v; cam(true); }, "marcos"));
+    if (d.marco !== "ninguno") {
+      panel.append(el("label", "l", "Texto del marco"));
+      const i = el("input"); i.value = d.marcoTexto; i.maxLength = 24; i.oninput = () => { d.marcoTexto = i.value; cam(); }; panel.append(i);
+      const dd = el("div", "dos"), a = el("div"), b = el("div");
+      a.append(el("label", "l", "Color del marco"), selectorColor(d.marcoColor, v => { d.marcoColor = v; cam(); }, true));
+      b.append(el("label", "l", "Color del texto"), selectorColor(d.marcoTextoColor, v => { d.marcoTextoColor = v; cam(); }, true));
+      dd.append(a, b); panel.append(dd);
+    }
+  } else if (V.sub === "logo") {
+    sec("Logo en el centro del QR");
+    if (d.logo) panel.append(archivoFila(d.logo, "Logo", () => { d.logo = ""; cam(true); }));
+    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { d.logo = await procesarImagen(fs[0], 600); cam(true); }));
+    if (!d.logo && q.pagina.portada) { const u = el("button", "btn", "Usar la portada de la página"); u.type = "button"; u.style.marginTop = "10px"; u.onclick = () => { d.logo = q.pagina.portada; cam(true); }; panel.append(u); }
+    if (d.logo) {
+      panel.append(rango("Tamaño del logo", d.logoTam, .12, .3, .01, v => { d.logoTam = v; cam(); }));
+      const f = el("label", "toggle", `<input type="checkbox"${d.logoFondo ? " checked" : ""}> Fondo detrás del logo`); f.querySelector("input").onchange = e => { d.logoFondo = e.target.checked; cam(); }; panel.append(f);
+      panel.append(el("div", "av info", "Con logo el QR usa corrección de errores alta (H), así se sigue leyendo aunque el logo tape parte del código."));
+    }
+  } else if (V.sub === "general") {
+    panel.append(el("p", "muted", "Sube un logotipo o una imagen y lo convertiremos en un código QR funcional y escaneable."));
+    const M = d.marca;
+    if (M.logo) panel.append(archivoFila(M.logo, "Imagen de fondo", () => { M.logo = ""; cam(true); }));
+    else panel.append(inputArchivo("image/png,image/jpeg,image/webp", async fs => { M.logo = await procesarImagen(fs[0], 1000, false); cam(true); }));
+    if (!M.logo && (q.pagina.portada || d.logo)) { const u = el("button", "btn", "Usar el logo que ya subí"); u.type = "button"; u.style.marginTop = "10px"; u.onclick = () => { M.logo = q.pagina.portada || d.logo; cam(true); }; panel.append(u); }
+    if (M.logo) {
+      sec("Ajustar recorte");
+      panel.append(rango("Escala", M.tam, .5, 1.6, .05, v => { M.tam = v; cam(); }));
+      const dd = el("div", "dos"); dd.append(rango("Mover horizontal", M.dx, -.4, .4, .02, v => { M.dx = v; cam(); }, v => Math.round(v * 100)), rango("Mover vertical", M.dy, -.4, .4, .02, v => { M.dy = v; cam(); }, v => Math.round(v * 100))); panel.append(dd);
+      const bt = el("div", "fila"); bt.style.marginTop = "14px";
+      [["⇆ Voltear", () => M.flipH = !M.flipH], ["⇅ Voltear", () => M.flipV = !M.flipV], ["↺ Girar", () => M.rot = (M.rot + 270) % 360], ["↻ Girar", () => M.rot = (M.rot + 90) % 360], ["Centrar", () => Object.assign(M, { dx: 0, dy: 0, tam: 1, rot: 0, flipH: false, flipV: false })]].forEach(([t, f]) => { const b = el("button", "btn", t); b.type = "button"; b.onclick = () => { f(); cam(true); }; bt.append(b); });
+      panel.append(bt);
+      sec("Legibilidad");
+      panel.append(rango("Tamaño de los puntos", M.punto, .4, .85, .05, v => { M.punto = v; cam(); }));
+      panel.append(rango("Aclarar la imagen", M.aclarar, 0, .6, .05, v => { M.aclarar = v; cam(); }));
+      panel.append(el("div", "ayuda", "Si un celular tarda en leerlo: sube el tamaño de los puntos o aclara la imagen."));
+    }
+  } else if (V.sub === "clave") {
+    if (!usaPagina(q)) { panel.append(el("div", "av", puedeEditable(q) ? "La contraseña funciona en códigos que abren una página. Activa “QR editable” en el paso 2." : "Este tipo de QR lleva los datos dentro del código, así que no puede tener contraseña.")); }
+    else {
+      const t = el("label", "toggle", `<input type="checkbox"${q.seg.activa ? " checked" : ""}> Activar contraseña`); t.querySelector("input").onchange = e => { q.seg.activa = e.target.checked; cam(true); }; panel.append(t);
+      if (q.seg.activa) {
+        panel.append(el("label", "l", "Contraseña"));
+        const i = el("input"); i.type = "text"; i.value = q.seg.clave; i.placeholder = "Mínimo 4 caracteres"; i.oninput = () => { q.seg.clave = i.value; cam(); }; panel.append(i);
+        panel.append(el("div", "av info", "El contenido de la página se guarda cifrado (AES-256): sin la contraseña no se puede ver, ni siquiera abriendo el código de la página. Tu sitio debe usar https://."));
+      }
+    }
+  } else if (V.sub === "prog") {
+    if (!usaPagina(q)) panel.append(el("div", "av", puedeEditable(q) ? "La programación funciona en códigos que abren una página. Activa “QR editable” en el paso 2." : "Este tipo de QR lleva los datos dentro del código, así que no se puede programar."));
+    else {
+      const P = q.prog;
+      const radios = (titulo, a, b, actual, cb) => { const w = el("div"); w.append(el("h3", "", titulo)); const g = el("div", "radio");
+        [a, b].forEach(([v, t, s]) => { const x = el("button", "rb" + (actual === v ? " on" : ""), `<i></i><span>${esc(t)}<small>${esc(s)}</small></span>`); x.type = "button"; x.onclick = () => cb(v); g.append(x); }); w.append(g); return w; };
+      const dd = el("div", "dos");
+      dd.append(radios("Cuándo se activa", [false, "Activar inmediatamente", "Se activa en cuanto la publiques."], [true, "Activar en una fecha", "Permanece inactivo hasta la hora elegida."], P.activarEn, v => { P.activarEn = v; cam(true); }));
+      dd.append(radios("Cuándo se pausa", [false, "Sin fecha de finalización", "Pausa cuando quieras."], [true, "Pausar en una fecha", "Se pausa automáticamente al llegar la hora."], P.pausarEn, v => { P.pausarEn = v; cam(true); }));
+      panel.append(dd);
+      const fe = el("div", "dos");
+      if (P.activarEn) { const w = el("div", "", `<label class="l">Fecha y hora de inicio</label><input type="datetime-local">`); const i = w.querySelector("input"); i.value = P.inicio; i.oninput = () => { P.inicio = i.value; cam(); }; fe.append(w); } else fe.append(el("div"));
+      if (P.pausarEn) { const w = el("div", "", `<label class="l">Fecha y hora de pausa</label><input type="datetime-local">`); const i = w.querySelector("input"); i.value = P.fin; i.oninput = () => { P.fin = i.value; cam(); }; fe.append(w); }
+      panel.append(fe);
+      const pz = el("label", "toggle", `<input type="checkbox"${P.pausado ? " checked" : ""}> Pausar ahora`); pz.querySelector("input").onchange = e => { P.pausado = e.target.checked; cam(true); }; panel.append(pz);
+      panel.append(el("label", "l", "Mensaje cuando no está activo")); const ms = el("input"); ms.value = P.mensaje; ms.oninput = () => { P.mensaje = ms.value; cam(); }; panel.append(ms);
+      panel.append(el("h3", "", "Límite de escaneos"));
+      panel.append(el("div", "av", "Contar escaneos necesita un servidor que registre cada visita. Esta versión publica páginas estáticas, así que el límite de escaneos queda para cuando conectemos un servidor."));
+      const f = v => v ? new Date(v).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" }) : "";
+      panel.append(el("div", "res", `<div><small>Se activa</small><b>${P.pausado ? "En pausa" : P.activarEn ? esc(f(P.inicio) || "Elige fecha") : "Inmediatamente"}</b></div><div><small>Se pausa</small><b>${P.pausarEn ? esc(f(P.fin) || "Elige fecha") : "Sin fecha de fin"}</b></div><div><small>Límite de escaneos</small><b>Ilimitado</b></div>`));
+      panel.append(el("div", "ayuda", "Los cambios de contraseña o programación se aplican al volver a subir la página."));
+    }
+  }
+  // pie
+  const pie = el("div", "pie"); const atr = el("button", "btn redondo", "←"); atr.onclick = () => ir("editor", { paso: 2 });
+  const fin = el("button", "btn azul", "Guardar y ver Mis QRs"); fin.onclick = () => { toast("Guardado"); ir("inicio"); };
+  pie.append(atr, fin); izq.append(pie);
+  // derecha
+  der.innerHTML = `<div class="pegajoso"><h3 style="text-align:center;margin-top:0;font-size:20px;font-weight:600">Vista previa</h3><div class="vista"><div class="qr" id="vq"></div><div class="estado" id="vqe"></div><div class="avisos" id="vqa"></div>
+  <div class="fila" style="justify-content:center;margin-top:14px"><select id="tam" style="width:auto"><option value="512">512 px</option><option value="1024" selected>1024 px</option><option value="2048">2048 px</option></select><button class="btn azul" id="bpng" style="padding:11px 20px">${svgIco("descarga", "#fff")} Descargar QR</button></div>
+  <div class="fila" style="justify-content:center;margin-top:10px"><button class="btn" id="bsvg">SVG</button>${usaPagina(q) ? '<button class="btn" id="bzip">Paquete para publicar (ZIP)</button>' : ""}</div>
+  <div class="muted" style="margin-top:10px;word-break:break-all">${esc(usaPagina(q) ? "Abre: " + urlPagina(q, DB.base_url) : "Datos dentro del QR")}</div></div></div>`;
+  $("bpng").querySelector("svg").style.cssText = "width:18px;height:18px";
+  $("bpng").onclick = () => descargarPNG(q, +$("tam").value);
+  $("bsvg").onclick = () => bajar(nombreArchivo(q) + ".svg", svgQR(contenidoQR(q, DB.base_url), q.d).svg);
+  if ($("bzip")) $("bzip").onclick = () => exportar([q], "qr-" + nombreArchivo(q) + ".zip");
+  actualizarVista();
+}
+const nombreArchivo = q => (usaPagina(q) ? q.slug : slugify(q.nombre || TIPOS[q.tipo].n)) || "qr";
+
+/* ---------- vista del QR + verificacion ---------- */
+let LECTOR = null, tVer = 0;
+(async () => { try { if ("BarcodeDetector" in window && (await BarcodeDetector.getSupportedFormats()).includes("qr_code")) LECTOR = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e) { } })();
+async function leerQR(canvas) {
+  if (LECTOR) { try { const r = await LECTOR.detect(canvas); if (r.length) return r[0].rawValue; } catch (e) { } }
+  if (window.jsQR) { const x = canvas.getContext("2d"), im = x.getImageData(0, 0, canvas.width, canvas.height), r = jsQR(im.data, im.width, im.height, { inversionAttempts: "dontInvert" }); return r ? r.data : null; }
+  return undefined; // sin lector disponible
+}
+async function vistaQR(q) {
+  let txt, r;
+  try { txt = contenidoQR(q, DB.base_url); r = svgQR(txt, q.d); } catch (e) { $("vq").innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  $("vq").innerHTML = r.svg;
+  // avisos de color
+  const d = q.d, av = [];
+  const fondo = d.modo === "marca" || d.transparente ? "#ffffff" : d.cFondo;
+  if (d.modo === "marca" && !d.marca.logo) av.push("Sube una imagen en General para el diseño de marca.");
+  if (d.modo !== "marca") {
+    if (lum(d.cMod) > lum(fondo)) av.push("Los módulos son más claros que el fondo (QR invertido): muchos celulares no lo leen.");
+    else if (contraste(d.cMod, fondo) < 3 || (d.degradado && contraste(d.cMod2, fondo) < 3)) av.push("Poco contraste entre los módulos y el fondo: usa un color más oscuro o un fondo más claro.");
+  } else if (lum(d.cMod) > .25) av.push("El color de los puntos es claro: elige uno más oscuro para que se lea bien sobre tu imagen.");
+  if (contraste(d.cMarco, fondo) < 3 || contraste(d.cPunto, fondo) < 3) av.push("Las esquinas tienen poco contraste con el fondo.");
+  if (usaPagina(q) && /tuempresa\.com/.test(DB.base_url)) av.push("Tu dirección de publicación todavía es la de ejemplo: cámbiala en Ajustes antes de imprimir.");
+  if (q.seg.activa && usaPagina(q) && (q.seg.clave || "").length < 4) av.push("La contraseña debe tener al menos 4 caracteres.");
+  $("vqa").innerHTML = av.map(a => `<div class="av">${esc(a)}</div>`).join("");
+  // verificacion de lectura
+  const yo = ++tVer, e = $("vqe"); e.className = "estado"; e.textContent = "Comprobando lectura…";
+  await new Promise(ok => setTimeout(ok, 250)); if (yo !== tVer) return;
+  try {
+    const c = await canvasDe(r.svg, 520, "#ffffff"), lei = await leerQR(c); if (yo !== tVer) return;
+    if (lei === undefined) { e.textContent = "Escanéalo con tu celular para comprobar que se lee."; }
+    else if (lei === txt) { e.className = "estado ok"; e.textContent = "✓ Se lee correctamente"; }
+    else { e.className = "estado bad"; e.textContent = "✗ No se pudo leer: sube el contraste, el tamaño de los puntos o reduce el logo."; }
+  } catch (er) { e.textContent = ""; }
+}
+
+/* ===================== descargas y exportacion ===================== */
+let DL = null, DL_listo = false;
+(async () => { try { if (window.claude && window.claude.use) DL = await window.claude.use("downloads"); } catch (e) { } DL_listo = true; })();
+async function bajar(nombre, data) {
+  if (DL) { try { await DL.save({ filename: nombre, data }); toast("Listo: " + nombre); } catch (e) { if (!e || e.code !== "declined") toast("No se pudo descargar (" + ((e && e.code) || "error") + ")"); } return; }
+  if (window.claude && !DL_listo) return toast("Un momento, preparando descargas…");
+  if (window.claude && !DL) return toast("Las descargas no están disponibles en esta vista.");
+  const blob = data instanceof Blob ? data : new Blob([data]), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nombre; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+async function descargarPNG(q, px) {
+  try { const r = svgQR(contenidoQR(q, DB.base_url), q.d); const c = await canvasDe(r.svg, px, q.d.transparente && q.d.modo !== "marca" ? null : "#ffffff"); bajar(nombreArchivo(q) + ".png", await pngBlob(c)); }
+  catch (e) { toast(e.message); }
+}
+async function exportar(lista, nombreZip) {
+  const malos = lista.filter(q => errores(q).length);
+  if (malos.length) return toast("Revisa: " + malos.map(q => q.nombre || TIPOS[q.tipo].n).join(", "));
+  toast("Preparando ZIP…");
+  const A = [], R = "qr-studio-export/", usados = new Set();
+  const lee = ["QR STUDIO - paquete exportado", "", "q/         -> paginas de tus QR. En GitHub: Add file > Upload files y arrastra la carpeta q completa.", "              Deben quedar en: " + DB.base_url + "/", "qrs/       -> codigos QR en PNG (imprimir) y SVG (imprenta). No hace falta subirlos.", "respaldo.json -> para volver a abrir todo en QR Studio (Importar respaldo)", "", "Codigos:"];
+  for (const q of lista) {
+    let n = nombreArchivo(q), i = 2; while (usados.has(n)) n = nombreArchivo(q) + "-" + i++; usados.add(n);
+    const r = svgQR(contenidoQR(q, DB.base_url), q.d);
+    const c = await canvasDe(r.svg, 1024, q.d.transparente && q.d.modo !== "marca" ? null : "#ffffff");
+    A.push([`${R}qrs/${n}.png`, new Uint8Array(await (await pngBlob(c)).arrayBuffer())], [`${R}qrs/${n}.svg`, r.svg]);
+    if (usaPagina(q)) {
+      const p = await paginaFinal(q);
+      A.push([`${R}q/${q.slug}/index.html`, p.html]); p.files.forEach(([f, b]) => A.push([`${R}q/${q.slug}/${f}`, b]));
+      lee.push(`- ${q.nombre || TIPOS[q.tipo].n}: ${urlPagina(q, DB.base_url)}${q.seg.activa ? " (con contrasena)" : ""}`);
+    } else lee.push(`- ${q.nombre || TIPOS[q.tipo].n}: datos dentro del QR (no se publica nada)`);
+  }
+  A.push([`${R}respaldo.json`, JSON.stringify({ app: "qr-studio", version: 3, base_url: DB.base_url, qrs: lista })], [`${R}LEEME.txt`, lee.join("\r\n")]);
+  bajar(nombreZip, zip(A));
+}
+const exportarTodo = () => DB.qrs.length ? exportar(DB.qrs, "qr-studio-todo.zip") : toast("No hay QRs para exportar");
+
+/* ===================== inicio ===================== */
+(async () => {
+  await ALM.abrir();
+  const g = await ALM.leer();
+  if (g && Array.isArray(g.qrs)) DB = g; else { DB.qrs = ejemplos(); guardar(); }
+  const sitio = baseDelSitio();
+  if (sitio && /tuempresa\.com/.test(DB.base_url) && /(github\.io|localhost|127\.0\.0\.1)$/.test(location.hostname)) { DB.base_url = sitio; guardar(); }
+  pintar();
+})();
+window.__qr = { get DB() { return DB; }, svgQR, canvasDe, paginaFinal, contenidoQR, usaPagina, TIPOS, nuevoQR, errores, zip, exportar, ir, V };
+
+</script>
+</body>
+</html>
