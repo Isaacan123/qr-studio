@@ -16,7 +16,21 @@ Funciona en celulares, tablets y laptops, y no necesita servidor ni instalar nad
 La dirección para publicar tus QR (base_url) se configura sola como `https://TU-USUARIO.github.io/qr-studio/q`.
 El QR de ejemplo **"Sustentabll · enlaces"** ya tiene su página en `q/sustentabll/`, así que puedes escanearlo desde el primer momento.
 
-## Uso diario
+## Publicar con un clic (recomendado)
+
+1. En la app entra a **Ajustes → Publicar en GitHub con un clic**. Tu usuario y el repositorio se llenan solos.
+2. Crea una clave de acceso en GitHub: **Settings → Developer settings → Fine-grained tokens → Generate new token**
+   ([enlace directo](https://github.com/settings/personal-access-tokens/new)).
+   - Repository access: **Only select repositories** → `qr-studio`
+   - Permissions → Repository permissions → **Contents: Read and write**
+3. Pega la clave en la app y presiona **Probar y guardar**.
+4. Listo: en **Mis QRs** cada QR muestra si está **Publicada**, si tiene **Cambios sin publicar** o si **Falta publicar**.
+   Usa **Publicar** (uno) o **Publicar en GitHub** (todos). La app avisa cuando GitHub Pages ya lo puso en línea (1–2 minutos).
+
+La clave solo se guarda en el navegador de ese dispositivo y solo puede escribir en este repositorio. Si la pierdes o la ves expuesta, bórrala en GitHub y crea otra.
+Al eliminar un QR publicado puedes elegir **Eliminar y quitar su página** de GitHub.
+
+## Uso diario (sin clave, a mano)
 
 1. Abre tu sitio y crea los QR en **+ Nuevo QR** (elige el tipo, el contenido y el diseño).
 2. En **Mis QRs** presiona **Exportar todo (ZIP)** y descomprime el archivo.
