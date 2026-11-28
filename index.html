@@ -1171,17 +1171,30 @@ function vistaAjustes(m) {
   $("gh_probar").onclick = async () => {
     const cfg = { owner: ow.value.trim(), repo: re.value.trim(), branch: br.value.trim() || "main", carpeta: (di.value.trim() || "q").replace(/^\/+|\/+$/g, "") };
     if (!cfg.owner || !cfg.repo) return est(`<div class="av">Escribe tu usuario y el nombre del repositorio.</div>`);
-    if (tk.value.trim()) GH.guardarToken(tk.value.trim(), rc.checked); else if (GH.token()) GH.guardarToken(GH.token(), rc.checked);
+    const escrita = tk.value.replace(/[\s\u200B-\u200D\uFEFF"'`]/g, "");   // quita espacios, saltos y comillas pegadas por error
+    if (escrita) {
+      if (!/^(github_pat_|ghp_|gho_|ghu_)[A-Za-z0-9_]{20,}$/.test(escrita)) return est(`<div class="av">✗ Eso no parece una clave de GitHub. Una clave nueva empieza con <b>github_pat_</b> y es larga (unos 90 caracteres). Asegúrate de copiar la clave completa que aparece en verde al presionar <b>Generate token</b>, no el nombre del token.</div>`);
+      GH.guardarToken(escrita, rc.checked);
+    } else if (GH.token()) GH.guardarToken(GH.token(), rc.checked);
     if (!GH.token()) return est(`<div class="av">Pega tu clave de acceso de GitHub.</div>`);
     DB.github = { ...cfg, ok: false }; guardar(); est(`<div class="av info">Probando conexión…</div>`);
+    const tkv = GH.token(), pista = `${tkv.slice(0, 15)}…${tkv.slice(-4)} (${tkv.length} caracteres)`;
+    let login = "";
+    try { login = (await GH.api("/user")).login; }
+    catch (e) {
+      DB.github = { ...cfg, ok: false }; guardar();
+      return est(e.status === 401 ? `<div class="av">✗ <b>GitHub no reconoce esta clave</b> (${esc(pista)}). Casi siempre es una de estas:<ul style="margin:6px 0 0;padding-left:18px;line-height:1.6"><li>Se copió incompleta: vuelve a copiarla con el botón de copiar que está junto a ella en GitHub.</li><li>La borraste o la regeneraste en GitHub después de copiarla.</li><li>Elegiste una fecha de vencimiento que ya pasó.</li></ul>Lo más rápido: crea una clave nueva y pégala aquí.</div>` : `<div class="av">✗ ${esc(e.message)}</div>`);
+    }
     try {
       const R = `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`;
-      const repo = await GH.api(R);
-      await GH.api(`${R}/git/ref/heads/${encodeURIComponent(cfg.branch)}`);
-      await GH.api(`${R}/git/blobs`, { method: "POST", body: JSON.stringify({ content: "", encoding: "base64" }) }); // prueba de escritura (no cambia nada visible)
+      let repo;
+      try { repo = await GH.api(R); } catch (e) { if (e.status === 404 || e.status === 403) throw new Error(`La clave es válida (cuenta @${login}), pero no tiene acceso a ${cfg.owner}/${cfg.repo}. En GitHub abre la clave, en “Repository access” elige “Only select repositories” y agrega ${cfg.repo}.`); throw e; }
+      try { await GH.api(`${R}/git/ref/heads/${encodeURIComponent(cfg.branch)}`); } catch (e) { if (e.status === 404) throw new Error(`No existe la rama “${cfg.branch}” en ${cfg.repo}. Normalmente es “main”.`); throw e; }
+      try { await GH.api(`${R}/git/blobs`, { method: "POST", body: JSON.stringify({ content: "", encoding: "base64" }) }); } // prueba de escritura (no cambia nada visible)
+      catch (e) { if (e.status === 403 || e.status === 404) throw new Error(`La clave (cuenta @${login}) puede ver ${cfg.repo} pero no escribir. En GitHub abre la clave y en “Repository permissions → Contents” elige “Read and write”.`); throw e; }
       DB.github = { ...cfg, owner: repo.owner.login, repo: repo.name, ok: true }; guardar();
       const pages = ghPagesURL(DB.github);
-      est(`<div class="estado ok" style="margin:0 0 6px">✓ Conectado a ${esc(repo.full_name)}. Ya puedes publicar desde Mis QRs.</div>` + (pages !== DB.base_url.replace(/\/+$/, "") ? `<div class="av" style="margin-top:6px">Tus páginas en GitHub Pages quedarán en <b>${esc(pages)}</b>, pero tu base_url es <b>${esc(DB.base_url)}</b>. <button class="btn" id="gh_usar" type="button">Usar ${esc(pages)}</button></div>` : ""));
+      est(`<div class="estado ok" style="margin:0 0 6px">✓ Conectado a ${esc(repo.full_name)} con la cuenta @${esc(login)}. Ya puedes publicar desde Mis QRs.</div>` + (pages !== DB.base_url.replace(/\/+$/, "") ? `<div class="av" style="margin-top:6px">Tus páginas en GitHub Pages quedarán en <b>${esc(pages)}</b>, pero tu base_url es <b>${esc(DB.base_url)}</b>. <button class="btn" id="gh_usar" type="button">Usar ${esc(pages)}</button></div>` : ""));
       if ($("gh_usar")) $("gh_usar").onclick = () => { DB.base_url = pages; $("aj_base").value = pages; guardar(); av(); $("gh_usar").parentElement.remove(); };
       tk.value = ""; tk.placeholder = "•••••••• (guardada; escribe otra para cambiarla)";
     } catch (e) { DB.github = { ...cfg, ok: false }; guardar(); est(`<div class="av">✗ ${esc(e.message)}</div>`); }
